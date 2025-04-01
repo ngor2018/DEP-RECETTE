@@ -1,0 +1,20 @@
+﻿@{
+    var action = ViewContext.RouteData.Values["action"].ToString();
+}
+@switch (action)
+{
+    case "Depense":
+        <div id="formParam">
+            
+        </div>
+        <div id="fullscreen_popup" style="display:none;z-index:3000;overflow-y:hidden">
+            <div class="forme" id="partieUnique">
+
+            </div>
+            <div class="forme" id="partieDelete">
+
+            </div>
+        </div>
+        break;
+}
+<script src="~/js/parametre/dep_recette.js"></script>

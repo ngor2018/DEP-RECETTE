@@ -1,4 +1,4 @@
-@{ 
+﻿@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -27,6 +27,7 @@
     <!-- [Template CSS Files] -->
     <link rel="stylesheet" href="~/assets/css/style.css" id="main-style-link">
     <link rel="stylesheet" href="~/assets/css/style-preset.css">
+    <script src="~/Scripts/jquery-3.6.1.min.js"></script>
 
 </head>
 
@@ -53,16 +54,16 @@
                         </div>
                         <div class="form-group mb-2">
                             <label class="form-label">Identifant</label>
-                            <input type="email" id="login" class="form-control" placeholder="Identifiant">
+                            <input type="text" id="login" class="form-control inputUp" placeholder="Identifiant">
                         </div>
                         <div class="form-group mb-2">
                             <label class="form-label">Mot de passe</label>
-                            <input type="password" id="password" class="form-control" placeholder="mot de passe">
+                            <input type="password" id="password" class="form-control inputUp" placeholder="mot de passe">
                         </div>
                         <div id="divConfirmPWD" style="display:none">
                             <div class="form-group mb-2">
                                 <label class="form-label">Confirmer mot de passe</label>
-                                <input type="password" id="Confirmpassword" class="form-control" placeholder="Confirmation mot de passe">
+                                <input type="password" id="Confirmpassword" class="form-control inputUp" placeholder="Confirmation mot de passe">
                             </div>
                         </div>
                         <div class="d-flex mt-1 justify-content-center">
@@ -71,7 +72,7 @@
                         <div class="d-grid my-2">
                             <div class="row justify-content-center" style="text-align:center">
                                 <div class="col-md-4">
-                                    <button type="button" class="btn btn-primary">Se connecter</button>
+                                    <button type="button" class="btn btn-primary" onclick="SeConnecter()" id="SeConnecter">Se connecter</button>
                                 </div>
                             </div>
                         </div>
@@ -80,7 +81,7 @@
                 <div class="auth-footer row">
                     <!-- <div class=""> -->
                     <div class="col my-1">
-                        <p class="m-0">Copyright � @DateTime.Now.Year - Tous Droits R�serv�s</p>
+                        <p class="m-0">Copyright © @DateTime.Now.Year - Tous Droits Réservés</p>
                     </div>
                     <!-- </div> -->
                 </div>
@@ -93,7 +94,7 @@
     <script src="~/assets/js/fonts/custom-font.js"></script>
     <script src="~/assets/js/pcoded.js"></script>
     <script src="~/assets/js/plugins/feather.min.js"></script>
-
+    <script src="~/js/authentify.js"></script>
 
 
 

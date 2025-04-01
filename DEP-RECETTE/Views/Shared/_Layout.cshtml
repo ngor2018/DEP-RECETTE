@@ -1,3 +1,11 @@
+@{ 
+    var controller = ViewContext.RouteData.Values["controller"].ToString();
+    var action = ViewContext.RouteData.Values["action"].ToString();
+    if (@Session["LOGIN"] == null)
+    {
+        Response.Redirect("~/Home/Index");
+    }
+}
 <!DOCTYPE html>
 
 <html>
@@ -32,8 +40,10 @@
     <!-- [Template CSS Files] -->
     <link rel="stylesheet" href="~/assets/css/style.css" id="main-style-link">
     <link rel="stylesheet" href="~/assets/css/style-preset.css">
+    <link href="~/Content/Site.css" rel="stylesheet" />
 
     <script src="~/Scripts/jquery-3.6.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     @*@Styles.Render("~/Content/bundle")*@
     @Styles.Render("~/Content/DevExtremeBundle")
     @*@Scripts.Render("~/Scripts/bundle")*@
@@ -41,6 +51,8 @@
 </head>
 
 <body data-pc-preset="preset-1" data-pc-direction="ltr" data-pc-theme="light">
+    <input type="hidden" name="@action" value="@action" id="pageName" class="form-control" />
+
     <!-- [ Pre-loader ] start -->
     <div class="loader-bg">
         <div class="loader-track">
@@ -54,12 +66,33 @@
 
     <section class="pc-container">
         <div class="pc-content">
-
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-12">
+                            @if (controller != "Home")
+                            {
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="#" class="Home" name="account">Accueil</a></li>
+                                    <li class="breadcrumb-item">@controller</li>
+                                    <li class="breadcrumb-item"><a href="#">@action</a></li>
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="page-header-title">
+                                    <h5 class="m-b-10">Accueil</h5>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
             @RenderBody()
 
         </div>
     </section>
-    @Html.Partial("partialVue/footer")
+    @*@Html.Partial("partialVue/footer")*@
 
 
 
@@ -74,8 +107,7 @@
     <script src="~/assets/js/fonts/custom-font.js"></script>
     <script src="~/assets/js/pcoded.js"></script>
     <script src="~/assets/js/plugins/feather.min.js"></script>
-
-
+    <script src="~/js/Layout.js"></script>
 
 
 
@@ -84,7 +116,7 @@
 
 
 
-    <script>change_box_container('false');</script>
+    @*<script>change_box_container('false');</script>*@
 
 
 
@@ -106,48 +138,7 @@
     <script src="~/assets/js/plugins/dataTables.keyTable.min.js"></script>
     <script src="~/assets/js/plugins/keyTable.bootstrap5.min.js"></script>
     <script src="~/assets/js/plugins/dataTables.select.min.js"></script>
-    <script>
-        // [ Autofill ]
-        $('#autofill').DataTable({
-            autoFill: true
-        });
-        // [ KeyTable Integration ]
-        $('#key-integration').DataTable({
-            keys: true,
-            autoFill: true
-        });
-        // [ Column Selector ]
-        $('#confirm-table').DataTable({
-            autoFill: {
-                alwaysAsk: true
-            }
-        });
 
-        // [ scroll fill ]
-        var safill = $('#scroll-fill').dataTable({
-            scrollY: 400,
-            scrollCollapse: true,
-            paging: false,
-            autoFill: true
-        });
-        $('#colum-select').DataTable({
-            columnDefs: [
-                {
-                    orderable: false,
-                    className: 'select-checkbox',
-                    targets: 0
-                }
-            ],
-            select: {
-                style: 'os',
-                selector: 'td:first-child'
-            },
-            order: [[1, 'asc']],
-            autoFill: {
-                columns: ':not(:first-child)'
-            }
-        });
-    </script>
 </body>
 
 </html>

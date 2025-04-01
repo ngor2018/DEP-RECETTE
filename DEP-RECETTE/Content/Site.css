@@ -1,2 +1,219 @@
-body {
+.buttonTab {
+    border: 1px solid #808080;
+    border-radius: 5px
+}
+
+    .buttonTab:hover {
+        background-color: #0162b0;
+        color: #fff;
+    }
+
+.cursorPointer:hover {
+    cursor: pointer;
+}
+
+.result_Param {
+    font-weight: bold;
+    color: #ce8500;
+}
+
+.alert_Param {
+    background: #ffdb9b;
+    padding: 3px 2px;
+    min-width: 420px;
+    border-radius: 4px;
+    border-left: 8px solid #ffa502;
+    opacity: 0;
+    pointer-events: none;
+}
+
+    .alert_Param.showAlert {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .alert_Param.show {
+        animation: show_slide 1s ease forwards;
+    }
+
+@keyframes show_slide {
+    0% {
+        transform: translateX(100%);
+    }
+
+    40% {
+        transform: translateX(-10%);
+    }
+
+    80% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-10px);
+    }
+}
+
+.alert_Param.hide {
+    display: none;
+}
+
+.alert_Param.hide {
+    animation: hide_slide 1s ease forwards;
+}
+
+@keyframes hide_slide {
+    0% {
+        transform: translateX(-10px);
+    }
+
+    40% {
+        transform: translateX(0%);
+    }
+
+    80% {
+        transform: translateX(-10%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.alert_Param span {
+    color: #000;
+}
+
+.alert_Param .fa-exclamation-circle {
+    font-size: 18px;
+    color: #ce8500;
+}
+
+.form_padd .row {
+    padding-top: 4px;
+}
+
+.input_focus {
+    border: 1px solid #808080;
+    font-weight: 600;
+    border-radius: 5px;
+    height: 28px;
+    width: 100%;
+    transition: border-color 0.3s ease;
+}
+
+    .input_focus:focus {
+        background-color: yellow !important;
+        box-shadow: 0 0 5px #808080;
+        border-color: #808080;
+    }
+
+.select2-container {
+    z-index: 2001 !important; /* Même niveau que Bootstrap Modal */
+}
+
+.forme {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+    .forme.active {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .forme.hidden {
+        display: none;
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+span.erreur {
+    color: red;
+    font-size: 15px;
+}
+
+th, td {
+    width: calc(var(--char-count, 5) * 1ch);
+    white-space: nowrap;
+}
+
+thead, tbody, tfoot, tr, td, th {
+    border: 1px solid #dad3d3;
+}
+
+.tabList thead tr th {
+    background-color: #77B5FE;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+}
+
+.tabList tbody tr td {
+    font-size: 12px;
+}
+
+.tabList thead tr th {
+    text-align: center;
+}
+
+.tabList tfoot {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 10;
+}
+
+.selected {
+    background-color: #f5d279;
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+}
+
+.horizontal-line {
+    border-bottom: 1px solid #0162b0;
+    display: inline-block;
+    width: 55%;
+    font-weight: bold;
+}
+
+.tabList tbody tr:hover.selected td {
+    background-color: #FFEFC6;
+    cursor: pointer;
+}
+
+.tabList tbody tr:hover td {
+    background-color: #FFEFC6;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#fullscreen_popup, #fullscreen_popup_Delete {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.pageView {
+    background-color: #fff;
+    border-radius: 0 8px 8px 0;
+    padding-top: 10px;
+    padding-bottom: 10px
+}
+
+#fullscreen_popup {
+    z-index: 2000;
+}
+
+#fullscreen_popup_Delete {
+    z-index: 1004;
 }

@@ -1,0 +1,32 @@
+﻿@Html.Partial("../CRUD/vue_config")
+
+
+
+@*<canvas id="signature-pad" style="border:1px solid black; width: 400px; height: 200px;"></canvas>
+    <button id="clear">Effacer</button>
+    <button id="valider">Valider avec Signature</button>
+
+    <form id="formValidation" method="post" action="@Url.Action("ValiderDepense", "Depense")">
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" id="signatureData" name="signatureBase64" />
+    </form>
+
+
+    <script>
+        const canvas = document.getElementById("signature-pad");
+        const signaturePad = new SignaturePad(canvas);
+
+        document.getElementById("clear").addEventListener("click", () => {
+            signaturePad.clear();
+        });
+
+        document.getElementById("valider").addEventListener("click", () => {
+            if (!signaturePad.isEmpty()) {
+                let dataUrl = signaturePad.toDataURL();
+                document.getElementById("signatureData").value = dataUrl;
+                document.getElementById("formValidation").submit();
+            } else {
+                alert("Veuillez signer avant de valider !");
+            }
+        });
+    </script>*@
