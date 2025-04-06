@@ -27,7 +27,6 @@
                     }
                 },
                 error: function (error) {
-                    alert("Erreur lors de l'envoi des données.");
                     console.error(error);
                 }
             });

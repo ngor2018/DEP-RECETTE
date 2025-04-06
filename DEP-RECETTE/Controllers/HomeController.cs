@@ -36,15 +36,15 @@ namespace DEP_RECETTE.Controllers
         {
             var login = objData.login;
             int etat = 0;
-            Tables.rUser rUser = new Tables.rUser();
+            TABLES.rUser rUser = new TABLES.rUser();
             var filtre = $"Login = '{login}'";
             DataTable objTable = rUser.RemplirDataTable(filtre);
             if (objTable.Rows.Count > 0)
             {
-                var loginActuel = (string)objTable.Rows[0][Tables.rUser.GetChamp.Login.ToString()];
+                var loginActuel = (string)objTable.Rows[0][TABLES.rUser.GetChamp.Login.ToString()];
                 if (login == loginActuel)
                 {
-                    string password = objTable.Rows[0][Tables.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
+                    string password = objTable.Rows[0][TABLES.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
                     if (password == "" || password == null)
                     {
                         etat = 1;
@@ -69,93 +69,101 @@ namespace DEP_RECETTE.Controllers
         public JsonResult login(parameter objData)
         {
             // Initialisation des objets et variables
-            Tables.rUser rUser = new Tables.rUser();
-            bool isAllValid = true, etatCompte = true;
-            string result = "";
-            var login = objData.login;
-            var password = rUser.CryptagePassword(objData.password);
-            var filtre = Tables.rUser.GetChamp.Login.ToString() + " = '" + login + "'";
-            // Récupération des données de l'utilisateur depuis la base de données
-            DataTable objTable = rUser.RemplirDataTable(filtre);
-
-            // Vérification si des lignes ont été retournées
-            if (objTable.Rows.Count > 0)
+            try
             {
-                var loginActuel = (string)objTable.Rows[0][Tables.rUser.GetChamp.Login.ToString()];
-                if (login == loginActuel)
+                TABLES.rUser rUser = new TABLES.rUser();
+                bool isAllValid = true, etatCompte = true;
+                string result = "";
+                var login = objData.login;
+                var password = rUser.CryptagePasswor(objData.password);
+                var filtre = TABLES.rUser.GetChamp.Login.ToString() + " = '" + login + "'";
+                // Récupération des données de l'utilisateur depuis la base de données
+                DataTable objTable = rUser.RemplirDataTable(filtre);
+
+                // Vérification si des lignes ont été retournées
+                if (objTable.Rows.Count > 0)
                 {
-                    string passwordActuel = objTable.Rows[0][Tables.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
-                    switch (passwordActuel)
+                    var loginActuel = (string)objTable.Rows[0][TABLES.rUser.GetChamp.Login.ToString()];
+                    if (login == loginActuel)
                     {
-                        case "":
-                        case null:
-                            con.Open();
-                            com.Connection = con;
-                            com.CommandText = "update rUser set PassWord = @password where login = @login";
-                            com.Parameters.AddWithValue("@password", password);
-                            com.Parameters.AddWithValue("@login", login);
-                            dr = com.ExecuteReader();
-                            con.Close();
-                            etatCompte = (bool)objTable.Rows[0][Tables.rUser.GetChamp.Actif.ToString()];
-                            if (!etatCompte)
-                            {
-                                isAllValid = false;
-                            }
-                            break;
-                        default:
-                            var filtreConnexion = $"Login = '{login}' and PassWord = '{password}'";
-                            DataTable objTabConn = rUser.RemplirDataTable(filtreConnexion);
-                            if (password == passwordActuel)
-                            {
-                                etatCompte = (bool)objTabConn.Rows[0][Tables.rUser.GetChamp.Actif.ToString()];
+                        string passwordActuel = objTable.Rows[0][TABLES.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
+                        switch (passwordActuel)
+                        {
+                            case "":
+                            case null:
+                                con.Open();
+                                com.Connection = con;
+                                com.CommandText = "update rUser set PassWord = @password where login = @login";
+                                com.Parameters.AddWithValue("@password", password);
+                                com.Parameters.AddWithValue("@login", login);
+                                dr = com.ExecuteReader();
+                                con.Close();
+                                etatCompte = (bool)objTable.Rows[0][TABLES.rUser.GetChamp.Actif.ToString()];
                                 if (!etatCompte)
                                 {
                                     isAllValid = false;
                                 }
-                            }
-                            else
-                            {
-                                isAllValid = false;
-                            }
-                            break;
+                                break;
+                            default:
+                                var filtreConnexion = $"Login = '{login}' and PassWord = '{password}'";
+                                DataTable objTabConn = rUser.RemplirDataTable(filtreConnexion);
+                                if (password == passwordActuel)
+                                {
+                                    etatCompte = (bool)objTabConn.Rows[0][TABLES.rUser.GetChamp.Actif.ToString()];
+                                    if (!etatCompte)
+                                    {
+                                        isAllValid = false;
+                                    }
+                                }
+                                else
+                                {
+                                    isAllValid = false;
+                                }
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        isAllValid = false;
                     }
                 }
                 else
                 {
                     isAllValid = false;
                 }
-            }
-            else
-            {
-                isAllValid = false;
-            }
-            if (isAllValid)
-            {
-                if (!etatCompte)
+                if (isAllValid)
                 {
-                    result = "Ce compte est désactivé";
+                    if (!etatCompte)
+                    {
+                        result = "Ce compte est désactivé";
+                    }
+                    else
+                    {
+                        Session["LOGIN"] = login;
+                        Session["pass"] = objData.password;
+                        Session["GROUPE"] = (string)objTable.Rows[0][TABLES.rUser.GetChamp.Groupe.ToString()];
+                        TABLES.rGroup rGroup = new TABLES.rGroup();
+                        var filtreGroupe = $"Code = '{Session["GROUPE"].ToString()}'";
+                        DataTable tabGr = rGroup.RemplirDataTable(filtreGroupe);
+                        Session["TypeGroupe"] = (string)tabGr.Rows[0][TABLES.rGroup.GetChamp.Type.ToString()];
+                    }
                 }
                 else
                 {
-                    Session["LOGIN"] = login;
-                    Session["pass"] = objData.password;
-                    Session["GROUPE"] = (string)objTable.Rows[0][Tables.rUser.GetChamp.Groupe.ToString()];
-                    Tables.rGroup rGroup = new Tables.rGroup();
-                    var filtreGroupe = $"Code = '{Session["GROUPE"].ToString()}'";
-                    DataTable tabGr = rGroup.RemplirDataTable(filtreGroupe);
-                    Session["TypeGroupe"] = (string)tabGr.Rows[0][Tables.rGroup.GetChamp.Type.ToString()];
+                    result = "Login ou mot de passe incorrect";
                 }
+                con.Close();
+                return Json(new
+                {
+                    statut = isAllValid,
+                    message = result
+                }, JsonRequestBehavior.AllowGet);
             }
-            else
+            catch (Exception ex)
             {
-                result = "Login ou mot de passe incorrect";
+
+                throw;
             }
-            con.Close();
-            return Json(new
-            {
-                statut = isAllValid,
-                message = result
-            }, JsonRequestBehavior.AllowGet);
         }
         //Déconnexion
         public ActionResult Logout()

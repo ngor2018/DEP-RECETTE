@@ -1,19 +1,39 @@
 ﻿@Html.Partial("../CRUD/vue_config")
 
 
+@*<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="description">Description</label>
+            </div>
+            <div class="col-md-9">
+                <input type="text" name="description" maxlength="250" value="" id="description" class="input_focus"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <label for="signature"></label>
+                <canvas id="signature" style="border:1px solid #c8c6c6; width: 350px; height: 150px;"></canvas>
+                <button class="btn btn-sm btn-danger" id="clear">Effacer</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-@*<canvas id="signature-pad" style="border:1px solid black; width: 400px; height: 200px;"></canvas>
-    <button id="clear">Effacer</button>
-    <button id="valider">Valider avec Signature</button>
+
+
+    
+    <button class="btn btn-sm btn-success" id="valider">Valider avec Signature</button>
 
     <form id="formValidation" method="post" action="@Url.Action("ValiderDepense", "Depense")">
-        <input type="hidden" name="id" value="" />
-        <input type="hidden" id="signatureData" name="signatureBase64" />
+        <input type="text" name="id" value="" />
+        <input type="text" id="signatureData" name="signatureBase64" />
     </form>
 
 
     <script>
-        const canvas = document.getElementById("signature-pad");
+        const canvas = document.getElementById("signature");
         const signaturePad = new SignaturePad(canvas);
 
         document.getElementById("clear").addEventListener("click", () => {
@@ -24,7 +44,7 @@
             if (!signaturePad.isEmpty()) {
                 let dataUrl = signaturePad.toDataURL();
                 document.getElementById("signatureData").value = dataUrl;
-                document.getElementById("formValidation").submit();
+                //document.getElementById("formValidation").submit();
             } else {
                 alert("Veuillez signer avant de valider !");
             }
