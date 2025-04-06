@@ -472,10 +472,13 @@ function DataTable(code, data) {
         $("#tab_" + code + " tbody").empty();
     }
     let list = "";
-    data.listData.forEach(item => {
-        switch (code) {
-            case "Depense":
-                list = `<tr>
+    if (data.listData.length == 0) {
+        document.getElementById('sumDep').textContent = "0";
+    } else {
+        data.listData.forEach(item => {
+            switch (code) {
+                case "Depense":
+                    list = `<tr>
                            <td hidden>${item.code}</td>
                            <td style='text-align:right'>${item.rowIndex}</td>
                            <td>${item.Designation}</td>
@@ -483,16 +486,16 @@ function DataTable(code, data) {
                            <td hidden>${item.Signature}</td>
                            <td hidden>${item.valider}</td>
                         </tr>`;
-                break;
-        }
+                    break;
+            }
 
-        // Ajouter la ligne générée au tableau
-        $("#tab_" + code + " tbody").append(list);
-        var total = 0;
-        total = getColumnSum("tab_Depense", 3);
-        console.log(total);
-        document.getElementById('sumDep').textContent = separateur_mil(total)
-    });
+            // Ajouter la ligne générée au tableau
+            $("#tab_" + code + " tbody").append(list);
+            var total = 0;
+            total = getColumnSum("tab_Depense", 3);
+            document.getElementById('sumDep').textContent = separateur_mil(total)
+        });
+    }
     // Initialisation de DataTable
     $('#tab_' + code).DataTable({
         "pageLength": 10,
