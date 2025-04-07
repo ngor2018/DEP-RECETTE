@@ -54,12 +54,6 @@ namespace DEP_RECETTE.Controllers
                     {
                         //Ajout
                         case false:
-                            //if (table.Rows.Count > 0)
-                            //{
-                            //    isAllValid = false;
-                            //}
-                            //else
-                            //{
                                 table = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { "" });
                                 row = table.NewRow();
                                 // Ajout des champs supplémentaires s'ils existent
@@ -71,7 +65,6 @@ namespace DEP_RECETTE.Controllers
                                     }
                                 }
                                 table.Rows.Add(row);
-                            //}
                             break;
                         //Edition
                         default:
@@ -111,7 +104,7 @@ namespace DEP_RECETTE.Controllers
                 fields["Signature"] = objData.Signature;
                 fields["sens"] = objData.sens;
                 fields["valider"] = objData.valider;
-                fields["CAISSE"] = null;
+                fields["CAISSE"] = objData.caisse;
                 fields["dateSaisie"] = DateTime.Now;
             }
             return fields;
@@ -120,15 +113,12 @@ namespace DEP_RECETTE.Controllers
         private string GetFiltre(parameter objData)
         {
             string niveau = objData.niveau,
-                code = objData.code,
-            description = objData.Designation,
-            signature = objData.Signature;
+                code = objData.code;
             switch (niveau)
             {
                 case "Depense":
                 case "Recette":
-                    return "";
-                    //return $"CODE = '{code}'";
+                    return $"CODE = '{code}'";
                 default:
                     return "";
             }

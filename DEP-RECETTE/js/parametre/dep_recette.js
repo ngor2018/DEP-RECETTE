@@ -20,6 +20,7 @@ $("#fermer").click(function () {
     resetForm();
 })
 $("#tab_" + pageName + " tbody").on("click", "tr", function () {
+    if (isEditing) return; // Désactiver si en mode édition
     $(this).toggleClass("selected").siblings(".selected").removeClass("selected");
     toggleForms("partieUnique");
     var nomTitre = "Editer ";
@@ -41,6 +42,7 @@ $("#tab_" + pageName + " tbody").on("click", "tr", function () {
     $("#montant").val(separateur_mil(this.cells[3].innerHTML));
     $("#description").val(separateur_mil(this.cells[2].innerHTML));
     document.getElementById('hiddenID').disabled = true;
+    document.getElementById('Supprimer').style.visibility = "visible";
 })
 $(".selectChoix").select2();
 $("#code1").change(function () {
@@ -51,13 +53,14 @@ function parameter() {
 }
 var Ajout = function () {
     toggleForms("partieUnique");
-    var nomTitre = "Ajout ";
+    var caisse = $("#code1 option:selected").text();
+    var nomTitre = "";
     switch (pageName) {
         case "Depense":
-            nomTitre = "Dépense";
+            nomTitre = `Dépense (Caisse :${caisse})`;
             break;
         case "Recette":
-            nomTitre = "Recette";
+            nomTitre = `Recette (Caisse :${caisse})`;
             break;
     }
     $("#titleParam_").html(nomTitre);
@@ -65,6 +68,8 @@ var Ajout = function () {
 }
 var Enregistrer = function () {
     var isAllValid = true;
+    var codeID = $("#hiddenID").val();
+    var caisse = $("#code1").val();
     var montant = $("#montant").val().replace(/\s+/g, "");
     var description = $("#description").val();
     if (montant.trim() == '' || montant == 0) {
@@ -111,7 +116,9 @@ var Enregistrer = function () {
                 break;
         }
         const objData = {
+            code: codeID,
             niveau: pageName,
+            caisse: caisse,
             montant: montant,
             Designation: description,
             Signature: codeSignature,
@@ -150,6 +157,30 @@ var Enregistrer = function () {
             }
         });
     }
+}
+
+var Supprimer = function () {
+    toggleForms("partieDelete");
+    var nomTitre = "Suppression ";
+    var nomTitreDel = "Voulez-vous supprimer Code ";
+    var caisse = $("#code1 option:selected").text();
+    code = $("#hiddenID").val();
+    switch (pageName) {
+        case "Depense":
+            nomTitre += `Dépense (Caisse :${caisse})`;
+            break;
+        case "Recette":
+            code = $("#code").val();
+            nomTitre += `Recette (Caisse :${caisse})`;
+            break;
+    }
+    nomTitreDel += '<strong><u>' + code + '</u></strong>';
+    $("#titreDel").html(nomTitre);
+    $("#messageDel").html(nomTitreDel);
+}
+var closeDel = function () {
+    toggleForms("partieUnique");
+    $("#errorCodif").html('');
 }
 function formVue(pageName) {
     let formHTML = "";
@@ -324,8 +355,8 @@ function formPopupPartieSaisie(pageName) {
                                         <button class="btn btn-sm btn-danger" id="clear">Effacer</button>
                                     </div>
                                 </div>
-                                <input type="text" name="hiddenID" value="" id="hiddenID"/>
-                                <input type="text" id="signatureData" name="signatureBase64" />
+                                <input type="hidden" name="hiddenID" value="" id="hiddenID"/>
+                                <input type="hidden" id="signatureData" name="signatureBase64" />
                             </div>
                         </div>
                         `;
@@ -458,6 +489,11 @@ function loadData(pageName) {
     })
 }
 function reportData(data) {
+    if (data.listCaisse.length == 0) {
+        document.getElementById('Ajout').disabled = true;
+    } else {
+        document.getElementById('Ajout').disabled = false;
+    }
     if ($("#code1").val() == "" || $("#code1").val() == null) {
         $('#code1').empty();
         $.each(data.listCaisse, function (index, row) {
@@ -474,7 +510,9 @@ function DataTable(code, data) {
     let list = "";
     if (data.listData.length == 0) {
         document.getElementById('sumDep').textContent = "0";
+        isEditing = true;
     } else {
+        isEditing = false;
         data.listData.forEach(item => {
             switch (code) {
                 case "Depense":
