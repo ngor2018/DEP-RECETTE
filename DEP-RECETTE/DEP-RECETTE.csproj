@@ -926,9 +926,11 @@
   <ItemGroup>
     <Content Include="Web.config" />
     <Content Include="Views\Home\Index.cshtml" />
-    <Content Include="Views\Parametre\Depense.cshtml" />
+    <Content Include="Views\Parametre\Caisse.cshtml" />
     <Content Include="Views\Parametre\Recette.cshtml" />
     <Content Include="Views\CRUD\vue_config.cshtml" />
+    <Content Include="Views\Saisie\Enregistrement.cshtml" />
+    <Content Include="Views\Saisie\TabBord.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -945,6 +947,7 @@
     <Compile Include="Controllers\CRUDController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ParametreController.cs" />
+    <Compile Include="Controllers\SaisieController.cs" />
     <Compile Include="Controllers\SampleDataController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

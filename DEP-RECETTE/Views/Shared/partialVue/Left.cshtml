@@ -1,5 +1,6 @@
 ﻿@{ 
     var action = ViewContext.RouteData.Values["action"].ToString();
+    var controller = ViewContext.RouteData.Values["controller"].ToString();
 }
 <nav class="pc-sidebar">
     <div class="navbar-wrapper">
@@ -22,58 +23,40 @@
                     <label>App</label>
                     <i class="ti ti-dashboard"></i>
                 </li>
-                <li class="pc-item @(action == "Depense"?"active":"")">
-                    <a href="#" class="pc-link Parametre" name="Depense">
-                        <span class="pc-micon"><i class="ti ti-typography"></i></span>
-                        <span class="pc-mtext">Dépense</span>
-                    </a>
-                </li>
-                <li class="pc-item @(action == "Recette"?"active":"")">
-                    <a href="#" class="pc-link Parametre" name="Recette">
-                        <span class="pc-micon"><i class="ti ti-color-swatch"></i></span>
-                        <span class="pc-mtext">Recette</span>
-                    </a>
-                </li>
-                <li class="pc-item @(action == "Caisse"?"active":"")">
-                    <a href="#" class="pc-link Parametre" name="Caisse">
-                        <span class="pc-micon"><i class="ti ti-color-swatch"></i></span>
-                        <span class="pc-mtext">Caisse</span>
-                    </a>
-                </li>
 
 
-                <li class="pc-item pc-hasmenu">
-                    <a href="#!" class="pc-link">
+                <li class="pc-item pc-hasmenu @(controller == "Parametre"?"active":"") @(controller == "Parametre"?"pc-trigger":"")">
+                    <a href="#" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-menu"></i></span><span class="pc-mtext">
                             Paramétres
                         </span><span class="pc-arrow"><i data-feather="chevron-right"></i></span>
                     </a>
                     <ul class="pc-submenu">
-                        <li class="pc-item"><a class="pc-link" href="#!">Société</a></li>
-                        <li class="pc-item"><a class="pc-link" href="#!">Caisses</a></li>
+                        <li class="pc-item @(action == "societe"?"active":"")"><a class="pc-link Parametre" name="societe" href="#">Société</a></li>
+                        <li class="pc-item @(action == "Caisse"?"active":"")"><a class="pc-link Parametre" name="Caisse" href="#">Caisses</a></li>
                     </ul>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="#!" class="pc-link">
+                <li class="pc-item pc-hasmenu @(controller == "Saisie"?"active":"") @(controller == "Saisie"?"pc-trigger":"")">
+                    <a href="#" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-menu"></i></span><span class="pc-mtext">
                             Saisie
                         </span><span class="pc-arrow"><i data-feather="chevron-right"></i></span>
                     </a>
                     <ul class="pc-submenu">
-                        <li class="pc-item"><a class="pc-link" href="#!">Enregistrement</a></li>
-                        <li class="pc-item"><a class="pc-link" href="#!">Tableau de bord</a></li>
-                        <li class="pc-item"><a class="pc-link" href="#!">Editions des opérations</a></li>
+                        <li class="pc-item @(action == "Enregistrement"?"active":"")"><a class="pc-link Saisie" name="Enregistrement" href="#">Enregistrement</a></li>
+                        <li class="pc-item @(action == "TabBord"?"active":"")"><a class="pc-link Saisie" name="TabBord" href="#">Tableau de bord</a></li>
+                        <li class="pc-item @(action == "EditOperation"?"active":"")"><a class="pc-link Saisie" name="EditOperation" href="#">Editions des opérations</a></li>
                     </ul>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="#!" class="pc-link">
+                <li class="pc-item pc-hasmenu @(controller == "Utilitaires"?"active":"") @(controller == "Utilitaires"?"pc-trigger":"")">
+                    <a href="#" class="pc-link">
                         <span class="pc-micon"><i class="ti ti-menu"></i></span><span class="pc-mtext">
                             Utilitaires
                         </span><span class="pc-arrow"><i data-feather="chevron-right"></i></span>
                     </a>
                     <ul class="pc-submenu">
-                        <li class="pc-item"><a class="pc-link" href="#!">Sauvegarde</a></li>
-                        <li class="pc-item"><a class="pc-link" href="#!">Restauration</a></li>
+                        <li class="pc-item @(action == "Sauvegarde"?"active":"")"><a class="pc-link Utilitaires" name="Sauvegarde" href="#">Sauvegarde</a></li>
+                        <li class="pc-item @(action == "Restauration"?"active":"")"><a class="pc-link Utilitaires" name="Restauration" href="#">Restauration</a></li>
                     </ul>
                 </li>
             </ul>

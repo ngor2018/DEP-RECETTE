@@ -2,18 +2,30 @@
 var isDelete = false;
 var isEditing = false;
 parameter();
-const canvas = document.getElementById("signature");
-const signaturePad = new SignaturePad(canvas);
-
-document.getElementById("clear").addEventListener("click", () => {
-    signaturePad.clear();
-    setErrorMessage("#signature", "", true);
-});
+let canvas = null;
+let signaturePad = null;
+switch (pageName) {
+    case "Enregistrement":
+        canvas = document.getElementById("signature");
+        signaturePad = new SignaturePad(canvas);
+        document.getElementById("clear").addEventListener("click", () => {
+            signaturePad.clear();
+            setErrorMessage("#signature", "", true);
+        });
+        break;
+    case "TabBord":
+        setTodayToDateSaisie(document.getElementById('debutPeriode'));
+        setLastToDateSaisie(document.getElementById('FinPeriode'));
+        break;
+}
 $("#signature").click(function () {
     setErrorMessage("#signature", "", true);
 })
 $('.input_focus').keyup(function () {
     $(this).siblings('span.erreur').css('display', 'none');
+})
+$("#code").keyup(function () {
+    this.value = this.value.toUpperCase();
 })
 $("#fermer").click(function () {
     document.getElementById('fullscreen_popup').style.display = "none";
@@ -25,63 +37,150 @@ $("#tab_" + pageName + " tbody").on("click", "tr", function () {
     toggleForms("partieUnique");
     var nomTitre = "Editer ";
     switch (pageName) {
-        case "Depense":
-            nomTitre += " Dépense";
+        case "Enregistrement":
+            var caisse = $("#code1 option:selected").text();
+            var sens = $("#code2 option:selected").text();
+            nomTitre += ` ${sens} (${caisse})`;
             document.getElementById('signatureData').value = this.cells[4].innerHTML;
             const existingSignature = document.getElementById('signatureData');
             if (existingSignature && existingSignature.value) {
                 signaturePad.fromDataURL(existingSignature.value);
             }
+            $("#hiddenID").val(this.cells[0].innerHTML);
+            document.getElementById('dateSaisie').value = afficherDateyyyyMMdd(this.cells[6].innerHTML);
+            $("#montant").val(separateur_mil(this.cells[3].innerHTML));
+            $("#description").val(separateur_mil(this.cells[2].innerHTML));
+
+            document.getElementById('hiddenID').disabled = true;
             break;
-        case "Recette":
-            nomTitre += " Recette";
+        case "Caisse":
+            nomTitre += " Caisse";
+            $("#code").val(this.cells[0].innerHTML);
+            $("#libelle").val(this.cells[1].innerHTML);
+            document.getElementById('code').disabled = true;
             break;
     }
     $("#titleParam_").html(nomTitre);
-    $("#hiddenID").val(this.cells[0].innerHTML);
-    $("#montant").val(separateur_mil(this.cells[3].innerHTML));
-    $("#description").val(separateur_mil(this.cells[2].innerHTML));
-    document.getElementById('hiddenID').disabled = true;
     document.getElementById('Supprimer').style.visibility = "visible";
 })
 $(".selectChoix").select2();
 $("#code1").change(function () {
+    switch (pageName) {
+        case "Enregistrement":
+            loadData(pageName);
+            break;
+    }
+})
+$("#code2").change(function () {
     loadData(pageName)
 })
+//$('#debutPeriode, #FinPeriode').on('change blur', mousemovedTabBord);
 function parameter() {
     formVue(pageName)
 }
 var Ajout = function () {
     toggleForms("partieUnique");
     var caisse = $("#code1 option:selected").text();
+    var sens = $("#code2 option:selected").text();
     var nomTitre = "";
     switch (pageName) {
-        case "Depense":
-            nomTitre = `Dépense (Caisse :${caisse})`;
+        case "Enregistrement":
+            nomTitre = `${sens} (${caisse})`;
             break;
-        case "Recette":
-            nomTitre = `Recette (Caisse :${caisse})`;
+        case "Caisse":
+            nomTitre = `Ajout Caisse`;
             break;
     }
     $("#titleParam_").html(nomTitre);
     resetForm();
 }
+var reloadTabBord = function () {
+    var isAllValid = true;
+    switch (pageName) {
+        case "TabBord":
+            const dateDebut = $("#debutPeriode").val();
+            const dateFin = $("#FinPeriode").val();
+            if (dateDebut.trim() == '') {
+                isAllValid = false;
+                $("#debutPeriode").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
+            } else {
+                const endDateD = document.getElementById('debutPeriode').value;
+
+                const yearD = endDateD.split('-')[0];
+                // Vérifier si l'année a 4 caractères
+                if (yearD.length === 4 && !isNaN(yearD)) {
+                    $("#debutPeriode").siblings('span.erreur').css('display', 'none');
+                } else {
+                    isAllValid = false;
+                    $("#debutPeriode").siblings('span.erroeur').css('display', 'block').html('Revoir l\'année.');
+                }
+            }
+            if (dateFin.trim() == '') {
+                isAllValid = false;
+                $("#FinPeriode").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
+            } else {
+                $("#FinPeriode").siblings('span.erreur').css('display', 'none');
+                const startDate = document.getElementById('debutPeriode').value;
+                const endDate = document.getElementById('FinPeriode').value;
+                const resultElement = document.getElementById('messageStruct');
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                const yearCloture = endDate.split('-')[0];
+                // Vérifier si l'année a 4 caractères
+                if (yearCloture.length === 4 && !isNaN(yearCloture)) {
+                    resultElement.textContent = '';
+                    if (end < start) {
+                        isAllValid = false;
+                        resultElement.textContent = 'La date fin doit être supérieure ou égale à la date début.';
+                    }
+                } else {
+                    isAllValid = false;
+                    $("#FinPeriode").siblings('span.erreur').css('display', 'block').html('Revoir l\'année.');
+                }
+            }
+            if (isAllValid) {
+                loadData(pageName);
+            }
+            break;
+    }
+}
 var Enregistrer = function () {
     var isAllValid = true;
-    var codeID = $("#hiddenID").val();
-    var caisse = $("#code1").val();
-    var montant = $("#montant").val().replace(/\s+/g, "");
-    var description = $("#description").val();
-    if (montant.trim() == '' || montant == 0) {
-        isAllValid = false;
-        setErrorMessage("#montant", "champ obligatoire", isAllValid);
-    }
-    if (description.trim() == '') {
-        isAllValid = false;
-        setErrorMessage("#description", "champ obligatoire", isAllValid);
-    }
+    var codeID = null;
+    var description = null;
+
     switch (pageName) {
-        case "Depense":
+        case "Enregistrement":
+            var caisse = $("#code1").val();
+            var sens = $("#code2").val();
+            var dateSaisie = $("#dateSaisie").val();
+            var montant = $("#montant").val().replace(/\s+/g, "");
+            codeID = $("#hiddenID").val();
+            description = $("#description").val();
+            if (dateSaisie.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#dateSaisie", "champ obligatoire", isAllValid);
+            } else {
+                const endDateD = document.getElementById('dateSaisie').value;
+
+                const yearD = endDateD.split('-')[0];
+                // Vérifier si l'année a 4 caractères
+                if (yearD.length === 4 && !isNaN(yearD)) {
+                    $("#dateSaisie").siblings('span.error').css('display', 'none');
+                } else {
+                    isAllValid = false;
+                    setErrorMessage("#dateSaisie", "Revoir l\'année.", isAllValid);
+                }
+            }
+            if (montant.trim() == '' || montant == 0) {
+                isAllValid = false;
+                setErrorMessage("#montant", "champ obligatoire", isAllValid);
+            }
+            if (description.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#description", "champ obligatoire", isAllValid);
+            }
             if (!signaturePad.isEmpty()) {
                 let dataUrl = signaturePad.toDataURL();
                 document.getElementById("signatureData").value = dataUrl;
@@ -90,21 +189,31 @@ var Enregistrer = function () {
                 setErrorMessage("#signature", "Veuillez signer avant de valider !", isAllValid);
             }
             break;
+        case "Caisse":
+            codeID = $("#code").val();
+            description = $("#libelle").val();
+            if (codeID.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#code", "champ obligatoire", isAllValid);
+            }
+            if (description.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#libelle", "champ obligatoire", isAllValid);
+            }
+            break;
     }
     if (isAllValid) {
         var codeSignature = $("#signatureData").val();
         var EtatCod = null;
-        var type = "";
         var EtatValid = "";
         var etat = true;
-        EtatCod = document.getElementById('hiddenID');
         switch (pageName) {
-            case "Depense":
-                type = "D";
-                EtatValid = "En attente";
+            case "Enregistrement":
+                EtatCod = document.getElementById('hiddenID');
+                EtatValid = "N";
                 break;
-            case "Recette":
-                type = "R";
+            case "Caisse":
+                EtatCod = document.getElementById('code');
                 break;
         }
         switch (EtatCod.disabled) {
@@ -119,10 +228,11 @@ var Enregistrer = function () {
             code: codeID,
             niveau: pageName,
             caisse: caisse,
+            dateSaisie: dateSaisie,
             montant: montant,
             Designation: description,
             Signature: codeSignature,
-            sens: type,
+            sens: sens,
             valider: EtatValid,
             etat: etat
         }
@@ -146,7 +256,11 @@ var Enregistrer = function () {
                         }, 1500);
                         break;
                     default:
-                        alert('Code existant');
+                        switch (pageName) {
+                            case "Caisse":
+                                $("#code").siblings('span.erreur').html(data.message).css('display', 'block');
+                                break;
+                        }
                         break;
                 }
             },
@@ -164,19 +278,69 @@ var Supprimer = function () {
     var nomTitre = "Suppression ";
     var nomTitreDel = "Voulez-vous supprimer Code ";
     var caisse = $("#code1 option:selected").text();
-    code = $("#hiddenID").val();
+    var sens = $("#code2 option:selected").text();
+    var code = null;
     switch (pageName) {
-        case "Depense":
-            nomTitre += `Dépense (Caisse :${caisse})`;
+        case "Enregistrement":
+            code = $("#hiddenID").val();
+            nomTitre += `${sens} (${caisse})`;
             break;
-        case "Recette":
+        case "Caisse":
             code = $("#code").val();
-            nomTitre += `Recette (Caisse :${caisse})`;
+            nomTitre += `Caisse ${code}`;
             break;
     }
     nomTitreDel += '<strong><u>' + code + '</u></strong>';
     $("#titreDel").html(nomTitre);
     $("#messageDel").html(nomTitreDel);
+}
+var validerDel = function () {
+    var code = null;
+    switch (pageName) {
+        case "Enregistrement":
+            code = $("#hiddenID").val();
+            break;
+        case "Caisse":
+            code = $("#code").val();
+            break;
+    }
+    const objData = {
+        code: code,
+        niveau: pageName
+    }
+    $.ajax({
+        url: "/CRUD/DelParam",
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(objData),
+        success: function (data) {
+            switch (data.statut) {
+                case true:
+                    var table = document.getElementById('tab_' + pageName);
+                    for (var i = 1; i < table.rows.length; i++) {
+                        var item = table.rows[i];
+                        if (item.cells[0].innerHTML == code) {
+                            table.deleteRow(i); //Supprimer la ligne correspondante
+                            break; //Sort de la boucle apres supppression
+                        }
+                    }
+                    closeDel();
+                    document.getElementById('fermer').click();
+                    var total = 0;
+                    total = getColumnSum("tab_" + pageName, 3);
+                    document.getElementById('sumDep').textContent = separateur_mil(total);
+                    break;
+                case false:
+                    $("#errorCodif").html(data.message);
+                    break;
+            }
+        },
+
+        error: function (error) {
+            alert("Erreur lors de l'envoi des données.");
+            console.error(error);
+        }
+    });
 }
 var closeDel = function () {
     toggleForms("partieUnique");
@@ -185,17 +349,37 @@ var closeDel = function () {
 function formVue(pageName) {
     let formHTML = "";
     switch (pageName) {
-        case "Depense":
-        case "Recette":
+        case "Enregistrement":
+        case "Caisse":
             formHTML = `
                         <div class="row">
                             <div class="col-md-12" style="padding-bottom:10px">
-                                <div class="float-start" style="width:50%">
+                                <div class="float-start" style="width:75%">
                                     <div id="partieSite">
                                     </div>
                                 </div>
                                 <div class="float-end">
                                     <button class="btn btn-sm btn-primary" id="Ajout" onclick="Ajout()"> <i class="fas fa-plus mr-2"></i>Ajouter</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-2 justify-content-center" style="text-align:center">
+                            <div class="col-md-12">
+                                <h4 id='messageStruct' style='color:red'></h4>
+                            </div>
+                        </div>
+                        <div id="niveauFormTableau"></div>
+                        `;
+        case "TabBord":
+            formHTML = `
+                        <div class="row">
+                            <div class="col-md-12" style="padding-bottom:10px">
+                                <div class="float-start" style="width:75%">
+                                    <div id="partieSite">
+                                    </div>
+                                </div>
+                                <div class="float-end">
+                                    <button class="btn btn-sm btn-primary" id="reloadTabBord" onclick="reloadTabBord()"> <i class="fas fa-reload mr-2"></i>Actualiser</button>
                                 </div>
                             </div>
                         </div>
@@ -219,14 +403,50 @@ function formVue(pageName) {
 function formTableTOP(pageName) {
     let formHTML = "";
     switch (pageName) {
-        case "Depense":
-        case "Recette":
+        case "Enregistrement":
+            formHTML = `
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="code1" id='labelCode1'>Caisse</label>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="code1" style="width:100%" class="selectChoix">
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="code2" id='labelCode2'>Sens</label>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="code2" style="width:100%" class="selectChoix">
+                                <option value="E">Entrée</option>
+                                <option value="S">Sortie</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+        case "TabBord":
             formHTML = `
                     <div class="row">
                         <div class="col-md-3">
-                            <label for="code1" id='labelCode1'>Caisse</label>
+                            <label for="debutPeriode">Période du :</label>
                         </div>
-                        <div class="col-md-9">
+                        <div class="col-md-3">
+                            <input type="date" name="debutPeriode" value="" id="debutPeriode" class="input_focus"/>
+                            <span class="erreur"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="FinPeriode">Au :</label>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" name="FinPeriode" value="" id="FinPeriode" class="input_focus"/>
+                            <span class="erreur"></span>
+                        </div>
+                    </div>
+                    <div class="row" style="padding-top:10px">
+                        <div class="col-md-3">
+                            <label for="code1">Caisses</label>
+                        </div>
+                        <div class="col-md-6">
                             <select id="code1" style="width:100%" class="selectChoix">
                             </select>
                         </div>
@@ -239,8 +459,7 @@ function formTableTOP(pageName) {
 function formTableau(pageName) {
     let formHTML = "";
     switch (pageName) {
-        case "Depense":
-        case "Recette":
+        case "Enregistrement":
             formHTML = `
                             <div class="row">
                                 <div class="col-sm-12">
@@ -256,6 +475,7 @@ function formTableau(pageName) {
                                                             <th>Montant</th>
                                                             <th hidden>Signature</th>
                                                             <th hidden>etat</th>
+                                                            <th hidden>dateSaisie</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
@@ -273,14 +493,68 @@ function formTableau(pageName) {
                             </div>
                         `;
             break;
+        case "Caisse":
+            formHTML = `
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="dt-responsive table-responsive">
+                                                <table id="tab_${pageName}" class="tabList" style="width:100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>CODE</th>
+                                                            <th>Libelle</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            break;
+        case "TabBord":
+            formHTML = `
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="dt-responsive table-responsive">
+                                                <table id="tab_${pageName}" class="tabList" style="width:100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>CAISSE</th>
+                                                            <th>CODE</th>
+                                                            <th>Date</th>
+                                                            <th>Désignation</th>
+                                                            <th>Entrée</th>
+                                                            <th>Sortie</th>
+                                                            <th>Statut</th>
+                                                            <th>Saisi par</th>
+                                                            <th>Date Saisie</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+            break;
     }
     $("#niveauFormTableau").append(formHTML);
 }
 function formPopup(pageName) {
     var formHtml = "";
     switch (pageName) {
-        case "Depense":
-        case "Recette":
+        case "Enregistrement":
+        case "Caisse":
+        case "TabBord":
             formHtml = `
                     <div class="row justify-content-center" style="padding-top:4%">
                         <div class="col-md-8 pageView">
@@ -321,10 +595,19 @@ function formPopup(pageName) {
 function formPopupPartieSaisie(pageName) {
     let formHTML = "";
     switch (pageName) {
-        case "Depense":
+        case "Enregistrement":
             formHTML = `
                         <div class="row">
                             <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="dateSaisie">Date</label>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="date" name="dateSaisie" value="" id="dateSaisie" class="input_focus"/>
+                                        <span class="erreur"></span>
+                                    </div>
+                                </div>
                                 <div class="row">
                                     <div class="col-md-3">
                                         <label for="montant">Montant</label>
@@ -348,7 +631,7 @@ function formPopupPartieSaisie(pageName) {
                                         <label for="signature">Signature</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <canvas id="signature" style="border:1px solid #c8c6c6; width: 350px; height: 150px;"></canvas>
+                                        <canvas id="signature" class="input_focus" style="border:1px solid #c8c6c6; width: 350px; height: 150px;"></canvas>
                                         <span class="erreur"></span>
                                     </div>
                                     <div class="col-md-2">
@@ -361,10 +644,36 @@ function formPopupPartieSaisie(pageName) {
                         </div>
                         `;
             break;
+        case "Caisse":
+            formHTML = `
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="code">CODE</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="code" value="" id="code" maxlength="2" class="input_focus"/>
+                                <span class="erreur"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="libelle">Libellé</label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="libelle" value="" id="libelle" maxlength="250" class="input_focus"/>
+                                <span class="erreur"></span>
+                            </div>
+                        </div>
+                        `;
+            break;
     }
     $("#zoneSaisie").append(formHTML);
-    var montant = document.getElementById('montant');
-    formatChiffreInput(montant);
+    switch (pageName) {
+        case "Enregistrement":
+            var montant = document.getElementById('montant');
+            formatChiffreInput(montant);
+            break;
+    }
 }
 function formDel() {
     let container = document.getElementById("partieDelete");
@@ -404,6 +713,53 @@ function formDel() {
         `;
     container.insertAdjacentHTML("beforeend", formHTML);
 }
+
+function isValidDate(dateStr) {
+    // Format attendu : YYYY-MM-DD (HTML5 input type="date")
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+
+    const dateObj = new Date(dateStr);
+    const year = dateObj.getFullYear();
+
+    // L’année doit avoir 4 chiffres entre 1900 et 2100 par exemple
+    return year >= 1900 && year <= 2100;
+}
+function setTodayToDateSaisie(dateInput) {
+    if (dateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Mois de 01 à 12
+        const dd = String(today.getDate()).padStart(2, '0');      // Jour de 01 à 31
+
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+        dateInput.value = formattedDate;
+    }
+}
+function setLastToDateSaisie(dateInput) {
+    if (dateInput) {
+        const currentYear = new Date().getFullYear();
+        const formattedDate = `${currentYear}-12-31`; // Dernier jour de l’année
+        dateInput.value = formattedDate;
+    }
+}
+
+function afficherDateyyyyMMdd(date) {
+    const [day, month, year] = date.split("/");
+    const formatDate = `${year}-${month}-${day}`;
+    return formatDate;
+}
+function afficherDateddMMyyyy(date) {
+    const today = new Date(date);
+    const jour = String(today.getDate()).padStart(2, '0'); // Jour sur 2 chiffres
+    const mois = String(today.getMonth() + 1).padStart(2, '0'); // Mois (0-indexé, donc +1)
+    const annee = today.getFullYear(); // Année
+
+    // Format jj/MM/yyyy
+    const dateFormattee = `${jour}/${mois}/${annee}`;
+
+    return dateFormattee;
+}
 function toggleForms(showId) {
     // Liste des IDs des formulaires
     let forms = ["partieUnique", "partieDelete"];
@@ -422,17 +778,23 @@ function toggleForms(showId) {
     });
 }
 function resetForm() {
-    switch (pageName) {
-        case "Depense":
-            signaturePad.clear();
-            $("#signatureData").val('')
-            break;
-        default:
-    }
-    $("#hiddenID").val('');
-    document.getElementById('hiddenID').disabled = false;
     $(".input_focus").val('');
     $('.input_focus').siblings('span.erreur').css('display', 'none');
+    switch (pageName) {
+        case "Enregistrement":
+            signaturePad.clear();
+            $("#signatureData").val('');
+            $("#hiddenID").val('');
+            document.getElementById('hiddenID').disabled = false;
+            var dateSaisie = document.getElementById("dateSaisie");
+            setTodayToDateSaisie(dateSaisie);
+            break;
+        case "Caisse":
+            $("#code").val('');
+            $("#libelle").val('');
+            document.getElementById('code').disabled = false;
+            break;
+    }
     document.getElementById('Supprimer').style.visibility = "hidden";
 }
 
@@ -443,6 +805,7 @@ function setErrorMessage(selector, message, isValid) {
         $(selector).siblings('span.erreur').css('display', 'none');
     }
 }
+
 // Fonction pour formater les entrées alphanumériques seulement number
 function formatChiffreInput(input) {
     input.addEventListener('keydown', function (event) {
@@ -472,7 +835,18 @@ function formatChiffreInput(input) {
     });
 }
 function loadData(pageName) {
-    var code1 = $("#code1").val();
+    var code1 = null, sens = null, date1 = null, date2 = null;
+    switch (pageName) {
+        case "Enregistrement":
+            code1 = $("#code1").val();
+            sens = $("#code2").val();
+            break;
+        case "TabBord":
+            code1 = $("#code1").val();
+            date1 = $("#debutPeriode").val();
+            date2 = $("#FinPeriode").val();
+            break;
+    }
     $.ajax({
         async: true,
         type: 'GET',
@@ -480,7 +854,10 @@ function loadData(pageName) {
         contentType: 'application/json; charset=utf-8',
         data: {
             code: code1,
+            sens: sens,
             page: pageName,
+            date1: date1,
+            date2: date2,
         },
         url: '/CRUD/GetDataParam',
         success: function (data) {
@@ -489,17 +866,26 @@ function loadData(pageName) {
     })
 }
 function reportData(data) {
-    if (data.listCaisse.length == 0) {
-        document.getElementById('Ajout').disabled = true;
-    } else {
-        document.getElementById('Ajout').disabled = false;
+    switch (pageName) {
+        case "Enregistrement":
+            if (data.listCaisse.length == 0) {
+                document.getElementById('Ajout').disabled = true;
+            } else {
+                document.getElementById('Ajout').disabled = false;
+            }
+            break;
     }
     if ($("#code1").val() == "" || $("#code1").val() == null) {
         $('#code1').empty();
+        switch (pageName) {
+            case "TabBord":
+                $("#code1").append("<option value='Tout'>Tout</option>");
+                break;
+        }
         $.each(data.listCaisse, function (index, row) {
             $("#code1").append("<option value='" + row.code + "'>" + row.libelle + "</option>");
         })
-    }
+    } 
     DataTable(pageName, data);
 }
 function DataTable(code, data) {
@@ -509,13 +895,17 @@ function DataTable(code, data) {
     }
     let list = "";
     if (data.listData.length == 0) {
-        document.getElementById('sumDep').textContent = "0";
-        isEditing = true;
+        switch (pageName) {
+            case "Enregistrement":
+                document.getElementById('sumDep').textContent = "0";
+                isEditing = true;
+                break;
+        }
     } else {
         isEditing = false;
         data.listData.forEach(item => {
             switch (code) {
-                case "Depense":
+                case "Enregistrement":
                     list = `<tr>
                            <td hidden>${item.code}</td>
                            <td style='text-align:right'>${item.rowIndex}</td>
@@ -523,15 +913,50 @@ function DataTable(code, data) {
                            <td style='text-align:right'>${separateur_mil(item.montant)}</td>
                            <td hidden>${item.Signature}</td>
                            <td hidden>${item.valider}</td>
+                           <td hidden>${item.dateSaisie}</td>
                         </tr>`;
+                    break;
+                case "Caisse":
+                    list = `<tr>
+                                <td>${item.code}</td>
+                                <td>${item.libelle}</td>
+                            </tr>`;
+                    break;
+                case "TabBord":
+                    var entree = "", sortie = "";
+                    if (item.sens == "S") {
+                        sortie = separateur_mil(item.montant);
+                    } else {
+                        sortie = "";
+                    }
+                    if (item.sens == "E") {
+                        entree = separateur_mil(item.montant);
+                    } else {
+                        entree = "";
+                    }
+                    list = `<tr>
+                                <td>${item.caisse}</td>
+                                <td>${item.code}</td>
+                                <td>${item.dateSaisie}</td>
+                                <td>${item.libelle}</td>
+                                <td>${entree}</td>
+                                <td>${sortie}</td>
+                                <td>${item.statut}</td>
+                                <td>${item.login}</td>
+                                <td>${item.dateSaisie}</td>
+                            </tr>`;
                     break;
             }
 
             // Ajouter la ligne générée au tableau
             $("#tab_" + code + " tbody").append(list);
-            var total = 0;
-            total = getColumnSum("tab_Depense", 3);
-            document.getElementById('sumDep').textContent = separateur_mil(total)
+            switch (code) {
+                case "Enregistrement":
+                    var total = 0;
+                    total = getColumnSum("tab_" + pageName, 3);
+                    document.getElementById('sumDep').textContent = separateur_mil(total);
+                    break;
+            }
         });
     }
     // Initialisation de DataTable

@@ -14,6 +14,9 @@
             case classes.contains("Parametre"):
                 controller = "Parametre";
                 break;
+            case classes.contains("Saisie"):
+                controller = "Saisie";
+                break;
             default:
                 console.warn("Aucun contrôleur correspondant trouvé.");
                 return;

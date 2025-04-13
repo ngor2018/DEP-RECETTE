@@ -17,18 +17,7 @@ namespace DEP_RECETTE.Controllers
         SqlDataReader dr;
         SqlConnection con = new SqlConnection(GetConnexion.GetConnectionString());
         parameter parametre = new parameter();
-        public ActionResult Depense()
-        {
-            if (Session["LOGIN"] == null)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            else
-            {
-                return View();
-            }
-        }
-        public ActionResult Recette()
+        public ActionResult Caisse()
         {
             if (Session["LOGIN"] == null)
             {

@@ -13,6 +13,8 @@ namespace DEP_RECETTE.Models
         public string niveau { get; set; }
         public string password { get; set; }
         public string caisse { get; set; }
+        public string entree { get; set; }
+        public string sortie { get; set; }
         public string Designation { get; set; }
         public string montant { get; set; }
         public string statut { get; set; }

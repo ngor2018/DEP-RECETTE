@@ -41,19 +41,18 @@ namespace DEP_RECETTE.Controllers
                 var enregistrerMethod = tableType.GetMethod("Enregistrer", new Type[] { typeof(DataTable) });
                 if (remplirDataTableMethod != null)
                 {
-                    try
-                    {
-                        table = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
-                    }
-                    catch (Exception ex)
-                    {
 
-                        throw;
-                    }
+                    table = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
                     switch (statut)
                     {
                         //Ajout
                         case false:
+                            if (table.Rows.Count > 0)
+                            {
+                                isAllValid = false;
+                            }
+                            else
+                            {
                                 table = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { "" });
                                 row = table.NewRow();
                                 // Ajout des champs supplémentaires s'ils existent
@@ -65,6 +64,7 @@ namespace DEP_RECETTE.Controllers
                                     }
                                 }
                                 table.Rows.Add(row);
+                            }
                             break;
                         //Edition
                         default:
@@ -79,8 +79,11 @@ namespace DEP_RECETTE.Controllers
                     }
                     try
                     {
-                        // Enregistrer si la méthode existe
-                        enregistrerMethod?.Invoke(tableInstance, new object[] { table });
+                        if (isAllValid)
+                        {
+                            // Enregistrer si la méthode existe
+                            enregistrerMethod?.Invoke(tableInstance, new object[] { table });
+                        }
                         result = statut ? "Enregistrement modifié avec succès" : (isAllValid ? "Enregistrement ajouté avec succès" : "Code existe déjà");
                     }
                     catch (Exception ex)
@@ -96,16 +99,22 @@ namespace DEP_RECETTE.Controllers
         private Dictionary<string, object> SetExtraFields(string niveau, parameter objData)
         {
             var fields = new Dictionary<string, object>();
-
-            if (new[] { "Depense","Recette" }.Contains(niveau))
+            switch (niveau)
             {
-                fields["montant"] = objData.montant;
-                fields["Designation"] = objData.Designation;
-                fields["Signature"] = objData.Signature;
-                fields["sens"] = objData.sens;
-                fields["valider"] = objData.valider;
-                fields["CAISSE"] = objData.caisse;
-                fields["dateSaisie"] = DateTime.Now;
+                case "Enregistrement":
+                    fields["montant"] = objData.montant;
+                    fields["Designation"] = objData.Designation;
+                    fields["Signature"] = objData.Signature;
+                    fields["sens"] = objData.sens;
+                    fields["valider"] = objData.valider;
+                    fields["CAISSE"] = objData.caisse;
+                    fields["dateSaisie"] = objData.dateSaisie;
+                    break;
+
+                case "Caisse":
+                    fields["code"] = objData.code;
+                    fields["libelle"] = objData.Designation;
+                    break;
             }
             return fields;
         }
@@ -116,8 +125,8 @@ namespace DEP_RECETTE.Controllers
                 code = objData.code;
             switch (niveau)
             {
-                case "Depense":
-                case "Recette":
+                case "Enregistrement":
+                case "Caisse":
                     return $"CODE = '{code}'";
                 default:
                     return "";
@@ -128,14 +137,15 @@ namespace DEP_RECETTE.Controllers
         {
             switch (niveau)
             {
-                case "Depense":
-                case "Recette":
+                case "Enregistrement":
                     return new TABLES.MOPERCAISSE();
+                case "Caisse":
+                    return new TABLES.RCAISSES();
                 default: return null;
             }
         }
         [HttpGet]
-        public JsonResult GetDataParam(string page, string code)
+        public JsonResult GetDataParam(string page, string code,string sens,string date1,string date2)
         {
             List<parameter> listData = new List<parameter>();
             List<parameter> listCaisse = new List<parameter>();
@@ -156,28 +166,33 @@ namespace DEP_RECETTE.Controllers
             {
                 dtUserCaisse = rCAISSES.RemplirDataTable();
             }
-            foreach (DataRow row in dtUserCaisse.Rows)
-            {
-                listCaisse.Add(new parameter()
-                {
-                    code = row["code"].ToString(),
-                    libelle = row["libelle"].ToString()
-                });
-            }
-            if (dtUserCaisse.Rows.Count > 0)
-            {
-                DataRow firstRowCa = dtUserCaisse.Rows[0];
-                var FisrtCodeCa = firstRowCa["CODE"].ToString();
-                if (string.IsNullOrEmpty(code))
-                {
-                    code = FisrtCodeCa;
-                }
-            }
             switch (page)
             {
-                case "Depense":
-                case "Recette":
+                case "Enregistrement":
                     tableInstance = new TABLES.MOPERCAISSE();
+                    if (dtUserCaisse.Rows.Count > 0)
+                    {
+                        DataRow firstRowCa = dtUserCaisse.Rows[0];
+                        var FisrtCodeCa = firstRowCa["CODE"].ToString();
+                        if (string.IsNullOrEmpty(code))
+                        {
+                            code = FisrtCodeCa;
+                        }
+                    }
+                    break;
+                case "TabBord":
+                    tableInstance = new TABLES.MOPERCAISSE();
+                    foreach (DataRow row in dtUserCaisse.Rows)
+                    {
+                        listCaisse.Add(new parameter()
+                        {
+                            code = row["code"].ToString(),
+                            libelle = row["libelle"].ToString()
+                        });
+                    }
+                    break;
+                case "Caisse":
+                    tableInstance = new TABLES.RCAISSES();
                     break;
             }
             if (tableInstance != null)
@@ -188,29 +203,69 @@ namespace DEP_RECETTE.Controllers
                 {
                     switch (page)
                     {
-                        case "Depense":
+                        case "Enregistrement":
                             if (groupe == "USER")
                             {
-                                filtre = $"sens = 'D' and CAISSE = '{code}' and UserCre = '{login}'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and UserCre = '{login}'";
                             }
                             else
                             {
-                                filtre = $"sens = 'D' and CAISSE = '{code}'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}'";
+
                             }
                             objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
                             break;
-                        case "Recette":
-                            if (groupe == "USER")
+                        case "TabBord":
+                            if (code == "" || code == null)
                             {
-                                filtre = $"sens = 'R' and CAISSE = '{code}' and UserCre = '{login}'";
+                                code = "Tout";
+                            }
+                            DateTime d1, d2;
+                            if (!DateTime.TryParse(date1, out d1))
+                            {
+                                d1 = DateTime.Now;
+                            }
+                            if (!DateTime.TryParse(date2, out d2))
+                            {
+                                d2 = new DateTime(DateTime.Now.Year, 12, 31);
+                            }
+                            string dateDebut = d1.ToString("dd-MM-yyyy");
+                            string dateFin = d2.ToString("dd-MM-yyyy");
+                            if (code == "Tout")
+                            {
+                                if (groupe == "USER")
+                                {
+                                    filtre = $"UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                }
+                                else
+                                {
+                                    filtre = $"dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                }
                             }
                             else
                             {
-                                filtre = $"sens = 'R' and CAISSE = '{code}'";
+                                if (groupe == "USER")
+                                {
+                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                }
+                                else
+                                {
+                                    filtre = $"CAISSE = '{code}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                }
                             }
-                            objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
+
+                            try
+                            {
+
+                                objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
+                            }
+                            catch (Exception ex)
+                            {
+
+                                throw;
+                            }
                             break;
-                        default:
+                        case "Caisse":
                             objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { "" });
                             break;
                     }
@@ -220,8 +275,7 @@ namespace DEP_RECETTE.Controllers
             int rowIndex = 1;
             switch (page)
             {
-                case "Depense":
-                case "Recette":
+                case "Enregistrement":
                     foreach (DataRow row in objTab.Rows)
                     {
                         var dateValid = row["dateValidation"] == DBNull.Value || string.IsNullOrWhiteSpace(row["dateValidation"].ToString())
@@ -241,6 +295,32 @@ namespace DEP_RECETTE.Controllers
                         rowIndex++;
                     }
                     break;
+                case "Caisse":
+                    foreach (DataRow row in objTab.Rows)
+                    {
+                        listData.Add(new parameter()
+                        {
+                            code = row["code"].ToString(),
+                            libelle = row["libelle"].ToString(),
+                        });
+                    }
+                    break;
+                case "TabBord":
+                    foreach (DataRow row in objTab.Rows)
+                    {
+                        listData.Add(new parameter()
+                        {
+                            caisse = row["CAISSE"].ToString(),
+                            code = row["code"].ToString(),
+                            dateSaisie = DateTime.Parse(row["dateSaisie"].ToString()).ToString("dd/MM/yyyy"),
+                            libelle = row["Designation"].ToString(),
+                            montant = row["MONTANT"].ToString(),
+                            statut = row["Valider"].ToString(),
+                            login = row["UserCre"].ToString(),
+                            sens = row["sens"].ToString()
+                        });
+                    }
+                    break;
             }
             var data = new
             {
@@ -248,6 +328,58 @@ namespace DEP_RECETTE.Controllers
                 listData = listData
             };
             return Json(data, JsonRequestBehavior.AllowGet);
+        }
+        
+        [HttpPost]
+        public JsonResult DelParam(parameter objData)
+        {
+            string result = "";
+            bool isAllValid = true, etat = false;
+            var code = objData.code;
+            var niveau = objData.niveau;
+            object tableInstance = null;
+            string tableType = "", filtre = "";
+            DataTable table = new DataTable();
+
+            switch (niveau)
+            {
+                case "Enregistrement":
+                    tableInstance = new TABLES.MOPERCAISSE();
+                    break;
+                case "Caisse":
+                    tableInstance = new TABLES.RCAISSES();
+                    if (IsCodeCaisseAutorise(code) == true)
+                    {
+                        isAllValid = false;
+                    }
+                    break;
+            }
+            if (tableInstance != null)
+            {
+                tableType = tableInstance.GetType().Name;
+            }
+            string requete = "";
+            switch (niveau)
+            {
+                case "Caisse":
+                case "Enregistrement":
+                    requete = "DELETE FROM " + tableType + " where CODE = '" + code + "'";
+                    break;
+            }
+            if (isAllValid)
+            {
+                result = "Enregistrement supprimé avec succès ";
+                con.Open();
+                com.Connection = con;
+                com.CommandText = requete;
+                dr = com.ExecuteReader();
+                con.Close();
+            }
+            else
+            {
+                result = "Suppression impossible : Codification rattachée !!!";
+            }
+            return Json(new { statut = isAllValid, message = result }, JsonRequestBehavior.AllowGet);
         }
         public DataTable GetUsCaisse(string login)
         {
@@ -278,6 +410,32 @@ namespace DEP_RECETTE.Controllers
                 return filtered.CopyToDataTable();
 
             return dtResult;
+        }
+        public bool IsCodeCaisseAutorise(string codeCaisse)
+        {
+            // Vérification du paramètre
+            if (string.IsNullOrWhiteSpace(codeCaisse)) return false;
+
+            // Instancier rUser
+            var objUser = new TABLES.rUser();
+            DataTable dtUser = objUser.RemplirDataTable(); // On récupère tous les utilisateurs
+
+            foreach (DataRow utilisateur in dtUser.Rows)
+            {
+                if (utilisateur["CAISSE"] == DBNull.Value) continue;
+
+                string chaineCaisse = utilisateur["CAISSE"].ToString(); // exemple : "1;2;4"
+                var codes = chaineCaisse.Split(';')
+                                        .Select(c => c.Trim())
+                                        .Where(c => !string.IsNullOrWhiteSpace(c));
+
+                if (codes.Contains(codeCaisse))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
 
