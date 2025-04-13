@@ -29,7 +29,9 @@ namespace DEP_RECETTE.Models
         public string valider { get; set; }
         public string typeSens { get; set; }
         public string typeValid { get; set; }
+        public string compteur { get; set; }
         public bool etat { get; set; }
         public long rowIndex { get; set; }
+        public IEnumerable<listOfClass> listOfCaisseAffect { get; set; }
     }
 }

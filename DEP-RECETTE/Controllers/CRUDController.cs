@@ -155,6 +155,63 @@ namespace DEP_RECETTE.Controllers
                 default: return null;
             }
         }
+        [HttpPost]
+        public JsonResult SendExploitation(parameter objData)
+        {
+            DateTime d1 = Convert.ToDateTime(objData.dateDebut), d2 = Convert.ToDateTime(objData.dateFin);
+            var debut = d1.ToString("dd-MM-yyyy");
+            var fin = d2.ToString("dd-MM-yyyy");
+            var compteur = Convert.ToInt32(objData.compteur);
+
+            EXPLOITATIONS.TableauBORD.structParametres structTabBord = new EXPLOITATIONS.TableauBORD.structParametres();
+            EXPLOITATIONS.TableauBORD mExploitation = new EXPLOITATIONS.TableauBORD();
+            structTabBord.structDate = new BDD.Abstraite.structInterValle
+            {
+                From = debut,
+                To = fin
+            };
+            structTabBord.User = Session["LOGIN"].ToString();
+
+            var isAllValid = true;
+            var result = "";
+
+            if (compteur > 0)
+            {
+                foreach (var item in objData.listOfCaisseAffect)
+                {
+                    structTabBord.arrCaisse.Add(item.code);
+                }
+            }
+            switch (objData.sens)
+            {
+                case "N":
+                    structTabBord.ENUMVALIDATION = EXPLOITATIONS.TableauBORD.ENUMVALIDATION.NONVALIDE;
+                    break;
+                case "V":
+                    structTabBord.ENUMVALIDATION = EXPLOITATIONS.TableauBORD.ENUMVALIDATION.VALIDE;
+                    break;
+                case "R":
+                    structTabBord.ENUMVALIDATION = EXPLOITATIONS.TableauBORD.ENUMVALIDATION.REFUS;
+                    break;
+                case "T":
+                    structTabBord.ENUMVALIDATION = EXPLOITATIONS.TableauBORD.ENUMVALIDATION.TOUS;
+                    break;
+            }
+            // Type d'édition
+            structTabBord.enumEdition = EXPLOITATIONS.TableauBORD.enumEDITION.OPERATIONCAISSE;
+
+            // Récupération des données
+            DataTable dt = mExploitation.GETSOURCE(structTabBord);
+            if (dt.Rows.Count == 0)
+            {
+                isAllValid = false;
+            }
+            if (!isAllValid)
+            {
+                result = "Aucun enregistrement n'a été trouvé";
+            }
+            return Json(new { statut = isAllValid, message = result }, JsonRequestBehavior.AllowGet);
+        }
         [HttpGet]
         public JsonResult GetDataParam(string page, string code,string sens,string date1,string date2)
         {
@@ -210,6 +267,17 @@ namespace DEP_RECETTE.Controllers
                         });
                     }
                     break;
+                case "EditOperation":
+                    //tableInstance = new TABLES.MOPERCAISSE();
+                    foreach (DataRow row in dtUserCaisse.Rows)
+                    {
+                        listCaisse.Add(new parameter()
+                        {
+                            code = row["code"].ToString(),
+                            libelle = row["libelle"].ToString()
+                        });
+                    }
+                    break;
                 case "Caisse":
                     tableInstance = new TABLES.RCAISSES();
                     break;
@@ -225,13 +293,14 @@ namespace DEP_RECETTE.Controllers
                         case "Enregistrement":
                             if (groupe == "SAISIE")
                             {
-                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and UserCre = '{login}' and Valider='N'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and UserCre = '{login}' and Valider = 'N'";
                             }
                             else
                             {
-                                filtre = $"sens = '{sens}' and CAISSE = '{code}' Valider='N'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and Valider = 'N'";
 
                             }
+
                             objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
                             break;
                         case "TabBord":
@@ -254,7 +323,7 @@ namespace DEP_RECETTE.Controllers
                             {
                                 if (groupe == "SAISIE")
                                 {
-                                    filtre = $"UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' Valider='N'";
+                                    filtre = $"UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' and Valider = 'N'";
                                 }
                                 else
                                 {
@@ -265,7 +334,7 @@ namespace DEP_RECETTE.Controllers
                             {
                                 if (groupe == "SAISIE")
                                 {
-                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' Valider='N'";
+                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' and Valider = 'N'";
                                 }
                                 else
                                 {
@@ -273,16 +342,7 @@ namespace DEP_RECETTE.Controllers
                                 }
                             }
 
-                            try
-                            {
-
-                                objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
-                            }
-                            catch (Exception ex)
-                            {
-
-                                throw;
-                            }
+                            objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
                             break;
                         case "Caisse":
                             objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { "" });

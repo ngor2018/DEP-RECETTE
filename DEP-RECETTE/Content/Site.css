@@ -1,3 +1,15 @@
+.Alltab_ {
+    width: 100%;
+    border: 1px solid #e8d9d9;
+    max-height: 235px;
+    overflow-x: auto;
+    overflow-y: auto;
+    border-radius: 3px;
+    padding: 15px;
+}
+.Alltab_ .tabEdit thead,.Alltab_ .tabEdit tbody,.Alltab_ .tabEdit tr, .Alltab_ .tabEdit td, .Alltab_ .tabEdit th{
+    border:none;
+}
 .buttonTab {
     border: 1px solid #808080;
     border-radius: 5px

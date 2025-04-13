@@ -730,9 +730,12 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="images\question.png" />
+    <Content Include="images\user.png" />
     <Content Include="js\authentify.js" />
     <Content Include="js\Layout.js" />
     <Content Include="js\parametre\dep_recette.js" />
+    <Content Include="js\parametre\EditionOperation.js" />
+    <Content Include="js\parametre\EnteteProjet.js" />
     <Content Include="Scripts\aspnet\dx.aspnet.data.js" />
     <Content Include="Scripts\aspnet\dx.aspnet.mvc.js" />
     <Content Include="Scripts\bootstrap.js" />
@@ -931,6 +934,8 @@
     <Content Include="Views\CRUD\vue_config.cshtml" />
     <Content Include="Views\Saisie\Enregistrement.cshtml" />
     <Content Include="Views\Saisie\TabBord.cshtml" />
+    <Content Include="Views\Saisie\EditOperation.cshtml" />
+    <Content Include="Views\Parametre\societe.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -953,6 +958,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\GetConnexion.cs" />
+    <Compile Include="Models\listOfClass.cs" />
     <Compile Include="Models\parameter.cs" />
     <Compile Include="Models\SampleData.cs" />
     <Compile Include="Models\SampleOrder.cs" />

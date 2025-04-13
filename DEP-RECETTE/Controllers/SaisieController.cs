@@ -31,5 +31,16 @@ namespace DEP_RECETTE.Controllers
                 return View();
             }
         }
+        public ActionResult EditOperation()
+        {
+            if (Session["LOGIN"] == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return View();
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@
     case "Caisse":
     case "TabBord":
         <div id="formParam">
-            
+
         </div>
         <div id="fullscreen_popup" style="display:none;z-index:2001;overflow-y:hidden">
             <div class="forme" id="partieUnique">
@@ -17,6 +17,97 @@
 
             </div>
         </div>
+        <script src="~/js/parametre/dep_recette.js"></script>
+        break;
+    case "EditOperation":
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row mb-2">
+                    <div class="col-md-3">
+                        <label for="debut">Période du :</label>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="debut" value="" id="debut" class="input_focus" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="fin">Au </label>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="fin" value="" id="fin" class="input_focus" />
+                    </div>
+                </div>
+                <div class="row mb-2 justify-content-center" style="text-align:center">
+                    <div class="col-md-12">
+                        <span id="messageStruct" style="color:red"></span>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="text-align:center">
+                    <div class="col-md-8" style="padding:2px;background-color:#808080;">
+                        <h5 style="color:#fff;letter-spacing:4px">Caisses</h5>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" disabled name="valueTotalQualCheck" value="" id="valueTotalQualCheck" class="form-control" style="background-color:#000;color:#fff" />
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="text-align:center">
+                    <div class="col-md-12">
+                        <span id="erreurCheck" style="color:red"></span>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="text-align:center">
+                    <div class="col-md-6">
+                        <div class="Alltab_">
+                            <table class="tabEdit" id="tab_Caisse">
+                                <thead hidden>
+                                    <tr>
+                                        <td>CODE</td>
+                                        <td>Etat</td>
+                                        <td>Libelle</td>
+                                    </tr>
+                                </thead>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="padding-top:10px">
+                    <div class="col-md-10" style="padding:10px;border:1px solid #cec8c8;border-radius:5px">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5><u>Validation</u></h5>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input validation" type="radio" checked name="validation" id="valid_1" value="N">
+                                    <label class="form-check-label" for="valid_1">Non Validé</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input validation" type="radio" name="validation" id="valid_2" value="V">
+                                    <label class="form-check-label" for="valid_2">Validé</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input validation" type="radio" name="validation" id="valid_3" value="R">
+                                    <label class="form-check-label" for="valid_3">Refus</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input validation" type="radio" name="validation" id="valid_4" value="T">
+                                    <label class="form-check-label" for="valid_4">Tous</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="text-align:center;padding-top:15px">
+                    <div class="col-md-12">
+                        <button class="btn btn-sm btn-success" id="valider" onclick="Valider()">Valider</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="~/js/parametre/EditionOperation.js"></script>
         break;
 }
-<script src="~/js/parametre/dep_recette.js"></script>
