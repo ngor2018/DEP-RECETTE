@@ -1,4 +1,5 @@
 ﻿var pageName = $("#pageName").val();
+var groupeUs = $("#groupeUs").val();
 var isDelete = false;
 var isEditing = false;
 parameter();
@@ -14,7 +15,9 @@ switch (pageName) {
         });
         break;
     case "TabBord":
-        setTodayToDateSaisie(document.getElementById('debutPeriode'));
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        document.getElementById('debutPeriode').value = `${yyyy}-01-01`;
         setLastToDateSaisie(document.getElementById('FinPeriode'));
         break;
 }
@@ -59,6 +62,49 @@ $("#tab_" + pageName + " tbody").on("click", "tr", function () {
             $("#libelle").val(this.cells[1].innerHTML);
             document.getElementById('code').disabled = true;
             break;
+        case "TabBord":
+            $("#caisse").empty(); // Vide le dropdown cible
+            var IDcode = this.cells[1].innerHTML;
+            $("#code").val(IDcode);
+            nomTitre = "Pièce no " + IDcode;
+            $("#code1 option").each(function () {
+                if ($(this).val() !== "Tout") {
+                    $("#caisse").append(
+                        $("<option>", {
+                            value: $(this).val(),
+                            text: $(this).text()
+                        })
+                    );
+                }
+            });
+            $("#caisse").val(this.cells[0].innerHTML).trigger('change');
+            document.getElementById('dateSaisie').value = afficherDateyyyyMMdd(this.cells[2].innerHTML);
+            var sens = this.cells[9].innerHTML;
+            var montant = 0;
+            if (sens == "S") {
+                //cas S (sortie)
+                montant = separateur_mil(this.cells[5].innerHTML);
+                document.getElementById('SensDep').checked = true;
+            } else {
+                //case E (entree)
+                montant = separateur_mil(this.cells[4].innerHTML);
+                document.getElementById('SensRec').checked = true;
+            }
+            $("#montant").val(montant);
+            $("#description").val(this.cells[3].innerHTML);
+            $("#observation").val(this.cells[10].innerHTML);
+            switch (this.cells[6].innerHTML) {
+                case "N":
+                    document.getElementById('non_valide').checked = true;
+                    break;
+                case "V":
+                    document.getElementById('_valide').checked = true;
+                    break;
+                case "R":
+                    document.getElementById('_refus').checked = true;
+                    break;
+            }
+            break;
     }
     $("#titleParam_").html(nomTitre);
     document.getElementById('Supprimer').style.visibility = "visible";
@@ -74,9 +120,9 @@ $("#code1").change(function () {
 $("#code2").change(function () {
     loadData(pageName)
 })
-//$('#debutPeriode, #FinPeriode').on('change blur', mousemovedTabBord);
+
 function parameter() {
-    formVue(pageName)
+    formVue(pageName);
 }
 var Ajout = function () {
     toggleForms("partieUnique");
@@ -147,15 +193,16 @@ var reloadTabBord = function () {
 }
 var Enregistrer = function () {
     var isAllValid = true;
-    var codeID = null;
-    var description = null;
+    var codeID = null, description = null, caisse = null, dateSaisie = null, montant = null
+    observation = null, sens = null, typeValid = null;
+
 
     switch (pageName) {
         case "Enregistrement":
-            var caisse = $("#code1").val();
-            var sens = $("#code2").val();
-            var dateSaisie = $("#dateSaisie").val();
-            var montant = $("#montant").val().replace(/\s+/g, "");
+            caisse = $("#code1").val();
+            sens = $("#code2").val();
+            dateSaisie = $("#dateSaisie").val();
+            montant = $("#montant").val().replace(/\s+/g, "");
             codeID = $("#hiddenID").val();
             description = $("#description").val();
             if (dateSaisie.trim() == '') {
@@ -201,6 +248,39 @@ var Enregistrer = function () {
                 setErrorMessage("#libelle", "champ obligatoire", isAllValid);
             }
             break;
+        case "TabBord":
+            caisse = $("#caisse").val();
+            dateSaisie = $("#dateSaisie").val();
+            montant = $("#montant").val().replace(/\s+/g, "");
+            codeID = $("#code").val();
+            description = $("#description").val();
+            observation = $("#observation").val();
+            sens = $(".typeSens:checked").val();
+            typeValid = $(".typeValid:checked").val();
+            if (dateSaisie.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#dateSaisie", "champ obligatoire", isAllValid);
+            } else {
+                const endDateD = document.getElementById('dateSaisie').value;
+
+                const yearD = endDateD.split('-')[0];
+                // Vérifier si l'année a 4 caractères
+                if (yearD.length === 4 && !isNaN(yearD)) {
+                    $("#dateSaisie").siblings('span.error').css('display', 'none');
+                } else {
+                    isAllValid = false;
+                    setErrorMessage("#dateSaisie", "Revoir l\'année.", isAllValid);
+                }
+            }
+            if (montant.trim() == '' || montant == 0) {
+                isAllValid = false;
+                setErrorMessage("#montant", "champ obligatoire", isAllValid);
+            }
+            if (description.trim() == '') {
+                isAllValid = false;
+                setErrorMessage("#description", "champ obligatoire", isAllValid);
+            }
+            break;
     }
     if (isAllValid) {
         var codeSignature = $("#signatureData").val();
@@ -213,6 +293,10 @@ var Enregistrer = function () {
                 EtatValid = "N";
                 break;
             case "Caisse":
+                EtatCod = document.getElementById('code');
+                break;
+            case "TabBord":
+                EtatValid = typeValid;
                 EtatCod = document.getElementById('code');
                 break;
         }
@@ -234,7 +318,9 @@ var Enregistrer = function () {
             Signature: codeSignature,
             sens: sens,
             valider: EtatValid,
-            etat: etat
+            etat: etat,
+            observation: observation,
+            typeValid: typeValid,
         }
         $.ajax({
             url: "/CRUD/Add_EditParam",
@@ -276,7 +362,7 @@ var Enregistrer = function () {
 var Supprimer = function () {
     toggleForms("partieDelete");
     var nomTitre = "Suppression ";
-    var nomTitreDel = "Voulez-vous supprimer Code ";
+    var nomTitreDel = "Voulez-vous supprimer ";
     var caisse = $("#code1 option:selected").text();
     var sens = $("#code2 option:selected").text();
     var code = null;
@@ -284,13 +370,19 @@ var Supprimer = function () {
         case "Enregistrement":
             code = $("#hiddenID").val();
             nomTitre += `${sens} (${caisse})`;
+            nomTitreDel += 'Code <strong><u>' + code + '</u></strong>';
             break;
         case "Caisse":
             code = $("#code").val();
             nomTitre += `Caisse ${code}`;
+            nomTitreDel += 'Code <strong><u>' + code + '</u></strong>';
+            break;
+        case "TabBord":
+            code = $("#code").val();
+            nomTitre += `Pièce no ${code}`;
+            nomTitreDel += 'la pièce no <strong><u>' + code + '</u></strong>';
             break;
     }
-    nomTitreDel += '<strong><u>' + code + '</u></strong>';
     $("#titreDel").html(nomTitre);
     $("#messageDel").html(nomTitreDel);
 }
@@ -301,6 +393,7 @@ var validerDel = function () {
             code = $("#hiddenID").val();
             break;
         case "Caisse":
+        case "TabBord":
             code = $("#code").val();
             break;
     }
@@ -326,9 +419,21 @@ var validerDel = function () {
                     }
                     closeDel();
                     document.getElementById('fermer').click();
-                    var total = 0;
-                    total = getColumnSum("tab_" + pageName, 3);
-                    document.getElementById('sumDep').textContent = separateur_mil(total);
+                    switch (pageName) {
+                        case "Enregistrement":
+                            var total = 0;
+                            total = getColumnSum("tab_" + pageName, 3);
+                            document.getElementById('sumDep').textContent = separateur_mil(total);
+                            break;
+                        case "TabBord":
+                            var totalEntree = 0, totalSortie = 0;
+                            totalEntree = getColumnSum("tab_" + pageName, 4);
+                            document.getElementById('sumEntree').textContent = separateur_mil(totalEntree);
+
+                            totalSortie = getColumnSum("tab_" + pageName, 5);
+                            document.getElementById('sumSortie').textContent = separateur_mil(totalSortie);
+                            break;
+                    }
                     break;
                 case false:
                     $("#errorCodif").html(data.message);
@@ -370,6 +475,7 @@ function formVue(pageName) {
                         </div>
                         <div id="niveauFormTableau"></div>
                         `;
+            break;
         case "TabBord":
             formHTML = `
                         <div class="row">
@@ -390,14 +496,14 @@ function formVue(pageName) {
                         </div>
                         <div id="niveauFormTableau"></div>
                         `;
-            $("#formParam").append(formHTML);
-            formTableTOP(pageName);
-            formTableau(pageName);
-            formPopup(pageName);
-            formPopupPartieSaisie(pageName);
-            formDel();
             break;
     }
+    $("#formParam").append(formHTML);
+    formTableTOP(pageName);
+    formTableau(pageName);
+    formPopup(pageName);
+    formPopupPartieSaisie(pageName);
+    formDel();
     loadData(pageName);
 }
 function formTableTOP(pageName) {
@@ -424,6 +530,7 @@ function formTableTOP(pageName) {
                         </div>
                     </div>
                 `;
+            break;
         case "TabBord":
             formHTML = `
                     <div class="row">
@@ -535,9 +642,19 @@ function formTableau(pageName) {
                                                             <th>Statut</th>
                                                             <th>Saisi par</th>
                                                             <th>Date Saisie</th>
+                                                            <th hidden>sens</th>
+                                                            <th hidden>observation</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th colspan='4' style="text-align:center">Total</th>
+                                                            <th style='text-align:right'><span id="sumEntree" style="font-weight:bold;color:#fff"></span></th>
+                                                            <th style='text-align:right'><span id="sumSortie" style="font-weight:bold;color:#fff"></span></th>
+                                                            <th colspan='3'></th>
+                                                        </tr>
+                                                    </tfoot>
                                                 </table>
                                             </div>
                                         </div>
@@ -666,12 +783,143 @@ function formPopupPartieSaisie(pageName) {
                         </div>
                         `;
             break;
+        case "TabBord":
+            formHTML = `
+                        <div class="row" style="padding-top:10px">
+                            <div class="col-md-3">
+                                <input type="hidden"  name="code" disabled value="" id="code" class="input_focus"/>
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:10px">
+                            <div class="col-md-3">
+                                <label for="caisse">Caisses</label>
+                            </div>
+                            <div class="col-md-6">
+                                <select id="caisse" style="width:100%" class="selectChoix">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="dateSaisie">Date</label>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="date" name="dateSaisie" value="" id="dateSaisie" class="input_focus"/>
+                                        <span class="erreur"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="montant">Montant</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" name="montant" value="" maxlength="12" id="montant" class="input_focus"/>
+                                        <span class="erreur"></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="description">Description</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" name="description" value="" maxlength="250" id="description" class="input_focus"/>
+                                        <span class="erreur"></span>
+                                    </div>
+                                </div>
+                                <div class="row" style="padding-top:10px">
+                                    <div class="col-md-5" style="border:1px solid #ccc0c0">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <h6>Sens</h6>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensDep" value="S">
+                                                    <label class="form-check-label" for="SensDep">Dépense</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensRec" value="E">
+                                                    <label class="form-check-label" for="SensRec">Recette</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+
+                                    </div>
+                                    <div class="col-md-5"style="border:1px solid #ccc0c0">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <h6>Validation</h6>
+                                            </div>
+                                        </div>
+                                        <div id="userVue">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="padding-top:10px">
+                                    <div class="col-md-2">
+                                        <label for="observation">Observation</label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <input type="text" name="observation" value="" id="observation" maxlength="250" class="input_focus"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+            break;
     }
     $("#zoneSaisie").append(formHTML);
     switch (pageName) {
         case "Enregistrement":
+        case "TabBord":
             var montant = document.getElementById('montant');
             formatChiffreInput(montant);
+            var VueCheck = "";
+            switch (groupeUs) {
+                case "SAISIE":
+                    VueCheck = `
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="non_valide" value="N">
+                                            <label class="form-check-label" for="non_valide">Non validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_valide" value="V">
+                                            <label class="form-check-label" for="_valide">Validé</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                    break;
+                default:
+                    VueCheck = `
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="non_valide" value="N">
+                                            <label class="form-check-label" for="non_valide">Non validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_valide" value="V">
+                                            <label class="form-check-label" for="_valide">Validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_refus" value="R">
+                                            <label class="form-check-label" for="_refus">Refus</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                    break;
+            }
+            $("#userVue").append(VueCheck);
             break;
     }
 }
@@ -778,10 +1026,10 @@ function toggleForms(showId) {
     });
 }
 function resetForm() {
-    $(".input_focus").val('');
     $('.input_focus').siblings('span.erreur').css('display', 'none');
     switch (pageName) {
         case "Enregistrement":
+            $(".input_focus").val('');
             signaturePad.clear();
             $("#signatureData").val('');
             $("#hiddenID").val('');
@@ -790,6 +1038,7 @@ function resetForm() {
             setTodayToDateSaisie(dateSaisie);
             break;
         case "Caisse":
+            $(".input_focus").val('');
             $("#code").val('');
             $("#libelle").val('');
             document.getElementById('code').disabled = false;
@@ -939,11 +1188,13 @@ function DataTable(code, data) {
                                 <td>${item.code}</td>
                                 <td>${item.dateSaisie}</td>
                                 <td>${item.libelle}</td>
-                                <td>${entree}</td>
-                                <td>${sortie}</td>
+                                <td style="text-align:right">${entree}</td>
+                                <td style="text-align:right">${sortie}</td>
                                 <td>${item.statut}</td>
                                 <td>${item.login}</td>
                                 <td>${item.dateSaisie}</td>
+                                <td hidden>${item.sens}</td>
+                                <td hidden>${item.observation}</td>
                             </tr>`;
                     break;
             }
@@ -955,6 +1206,14 @@ function DataTable(code, data) {
                     var total = 0;
                     total = getColumnSum("tab_" + pageName, 3);
                     document.getElementById('sumDep').textContent = separateur_mil(total);
+                    break;
+                case "TabBord":
+                    var totalEntree = 0, totalSortie = 0;
+                    totalEntree = getColumnSum("tab_" + pageName, 4);
+                    document.getElementById('sumEntree').textContent = separateur_mil(totalEntree);
+
+                    totalSortie = getColumnSum("tab_" + pageName, 5);
+                    document.getElementById('sumSortie').textContent = separateur_mil(totalSortie);
                     break;
             }
         });

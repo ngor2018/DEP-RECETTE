@@ -25,7 +25,10 @@ namespace DEP_RECETTE.Models
         public string UserValid { get; set; }
         public string Signature { get; set; }
         public string sens { get; set; }
+        public string observation { get; set; }
         public string valider { get; set; }
+        public string typeSens { get; set; }
+        public string typeValid { get; set; }
         public bool etat { get; set; }
         public long rowIndex { get; set; }
     }

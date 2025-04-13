@@ -115,6 +115,15 @@ namespace DEP_RECETTE.Controllers
                     fields["code"] = objData.code;
                     fields["libelle"] = objData.Designation;
                     break;
+                case "TabBord":
+                    fields["montant"] = objData.montant;
+                    fields["Designation"] = objData.Designation;
+                    fields["sens"] = objData.sens;
+                    fields["valider"] = objData.valider;
+                    fields["CAISSE"] = objData.caisse;
+                    fields["dateSaisie"] = objData.dateSaisie;
+                    fields["observation"] = objData.observation;
+                    break;
             }
             return fields;
         }
@@ -127,6 +136,7 @@ namespace DEP_RECETTE.Controllers
             {
                 case "Enregistrement":
                 case "Caisse":
+                case "TabBord":
                     return $"CODE = '{code}'";
                 default:
                     return "";
@@ -138,6 +148,7 @@ namespace DEP_RECETTE.Controllers
             switch (niveau)
             {
                 case "Enregistrement":
+                case "TabBord":
                     return new TABLES.MOPERCAISSE();
                 case "Caisse":
                     return new TABLES.RCAISSES();
@@ -157,7 +168,7 @@ namespace DEP_RECETTE.Controllers
             var login = Convert.ToString(Session["LOGIN"]);
             var groupe = Convert.ToString(Session["GROUPE"]);
             DataTable dtUserCaisse = new DataTable();
-            if (groupe == "USER")
+            if (groupe == "SAISIE")
             {
                 //dtUserCaisse = rUser.GetUserCaisse(login);
                 dtUserCaisse = GetUsCaisse(login);
@@ -170,6 +181,14 @@ namespace DEP_RECETTE.Controllers
             {
                 case "Enregistrement":
                     tableInstance = new TABLES.MOPERCAISSE();
+                    foreach (DataRow row in dtUserCaisse.Rows)
+                    {
+                        listCaisse.Add(new parameter()
+                        {
+                            code = row["code"].ToString(),
+                            libelle = row["libelle"].ToString()
+                        });
+                    }
                     if (dtUserCaisse.Rows.Count > 0)
                     {
                         DataRow firstRowCa = dtUserCaisse.Rows[0];
@@ -204,13 +223,13 @@ namespace DEP_RECETTE.Controllers
                     switch (page)
                     {
                         case "Enregistrement":
-                            if (groupe == "USER")
+                            if (groupe == "SAISIE")
                             {
-                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and UserCre = '{login}'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}' and UserCre = '{login}' and Valider='N'";
                             }
                             else
                             {
-                                filtre = $"sens = '{sens}' and CAISSE = '{code}'";
+                                filtre = $"sens = '{sens}' and CAISSE = '{code}' Valider='N'";
 
                             }
                             objTab = (DataTable)remplirDataTableMethod.Invoke(tableInstance, new object[] { filtre });
@@ -223,7 +242,7 @@ namespace DEP_RECETTE.Controllers
                             DateTime d1, d2;
                             if (!DateTime.TryParse(date1, out d1))
                             {
-                                d1 = DateTime.Now;
+                                d1 = new DateTime(DateTime.Now.Year, 01, 01);
                             }
                             if (!DateTime.TryParse(date2, out d2))
                             {
@@ -233,9 +252,9 @@ namespace DEP_RECETTE.Controllers
                             string dateFin = d2.ToString("dd-MM-yyyy");
                             if (code == "Tout")
                             {
-                                if (groupe == "USER")
+                                if (groupe == "SAISIE")
                                 {
-                                    filtre = $"UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                    filtre = $"UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' Valider='N'";
                                 }
                                 else
                                 {
@@ -244,9 +263,9 @@ namespace DEP_RECETTE.Controllers
                             }
                             else
                             {
-                                if (groupe == "USER")
+                                if (groupe == "SAISIE")
                                 {
-                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' Valider='N'";
                                 }
                                 else
                                 {
@@ -317,7 +336,8 @@ namespace DEP_RECETTE.Controllers
                             montant = row["MONTANT"].ToString(),
                             statut = row["Valider"].ToString(),
                             login = row["UserCre"].ToString(),
-                            sens = row["sens"].ToString()
+                            sens = row["sens"].ToString(),
+                            observation = row["observation"].ToString()
                         });
                     }
                     break;
@@ -344,6 +364,7 @@ namespace DEP_RECETTE.Controllers
             switch (niveau)
             {
                 case "Enregistrement":
+                case "TabBord":
                     tableInstance = new TABLES.MOPERCAISSE();
                     break;
                 case "Caisse":
@@ -363,6 +384,7 @@ namespace DEP_RECETTE.Controllers
             {
                 case "Caisse":
                 case "Enregistrement":
+                case "TabBord":
                     requete = "DELETE FROM " + tableType + " where CODE = '" + code + "'";
                     break;
             }
