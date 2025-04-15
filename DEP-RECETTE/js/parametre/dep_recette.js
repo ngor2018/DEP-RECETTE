@@ -2,9 +2,29 @@
 var groupeUs = $("#groupeUs").val();
 var isDelete = false;
 var isEditing = false;
+const today = new Date();
+const yyyy = today.getFullYear();
+
 parameter();
 let canvas = null;
 let signaturePad = null;
+$(document).on('change', '#defaultCheck_Tous', function () {
+    if ($(this).is(':checked')) {
+        // Si "Tous" est coché, décocher les autres
+        $('input[name="check"]').prop('checked', false);
+    }
+    compteurCheckBox();
+});
+$(document).on('change', 'input[name="check"]', function () {
+    // Si au moins une caisse est cochée, décocher "Tous"
+    if ($('input[name="check"]:checked').length > 0) {
+        $('#defaultCheck_Tous').prop('checked', false);
+    } else {
+        // Si aucune caisse cochée, recocher "Tous"
+        $('#defaultCheck_Tous').prop('checked', true);
+    }
+    compteurCheckBox();
+});
 switch (pageName) {
     case "Enregistrement":
         canvas = document.getElementById("signature");
@@ -15,10 +35,9 @@ switch (pageName) {
         });
         break;
     case "TabBord":
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        document.getElementById('debutPeriode').value = `${yyyy}-01-01`;
-        setLastToDateSaisie(document.getElementById('FinPeriode'));
+    case "EditOperation":
+        document.getElementById('debut').value = `${yyyy}-01-01`;
+        document.getElementById('fin').value = `${yyyy}-12-31`;
         break;
 }
 $("#signature").click(function () {
@@ -32,15 +51,24 @@ $("#code").keyup(function () {
 })
 $("#fermer").click(function () {
     document.getElementById('fullscreen_popup').style.display = "none";
-    resetForm();
+    switch (pageName) {
+        case "Enregistrement":
+        case "Caisse":
+            resetForm();
+            break;
+        case "TabBord":
+        case "EditOperation":
+
+            break;
+    }
 })
 $("#tab_" + pageName + " tbody").on("click", "tr", function () {
     if (isEditing) return; // Désactiver si en mode édition
     $(this).toggleClass("selected").siblings(".selected").removeClass("selected");
-    toggleForms("partieUnique");
     var nomTitre = "Editer ";
     switch (pageName) {
         case "Enregistrement":
+            toggleForms("partieUnique");
             var caisse = $("#code1 option:selected").text();
             var sens = $("#code2 option:selected").text();
             nomTitre += ` ${sens} (${caisse})`;
@@ -57,26 +85,34 @@ $("#tab_" + pageName + " tbody").on("click", "tr", function () {
             document.getElementById('hiddenID').disabled = true;
             break;
         case "Caisse":
+            toggleForms("partieUnique");
             nomTitre += " Caisse";
             $("#code").val(this.cells[0].innerHTML);
             $("#libelle").val(this.cells[1].innerHTML);
             document.getElementById('code').disabled = true;
             break;
         case "TabBord":
+            toggleForms("partieUnique");
+            formPopupTabBord(pageName);
             $("#caisse").empty(); // Vide le dropdown cible
             var IDcode = this.cells[1].innerHTML;
             $("#code").val(IDcode);
             nomTitre = "Pièce no " + IDcode;
-            $("#code1 option").each(function () {
-                if ($(this).val() !== "Tout") {
+            $("#caisse").empty(); // Vide d'abord la liste si nécessaire
+            $("#tab_Caisse tr:gt(0)").each(function () {
+                var inputVal = $(this).find("td:eq(0) input").val();
+                var text = $(this).find("td:eq(3)").html();
+
+                if (inputVal !== "Tous") {
                     $("#caisse").append(
                         $("<option>", {
-                            value: $(this).val(),
-                            text: $(this).text()
+                            value: inputVal,
+                            text: text
                         })
                     );
                 }
             });
+
             $("#caisse").val(this.cells[0].innerHTML).trigger('change');
             document.getElementById('dateSaisie').value = afficherDateyyyyMMdd(this.cells[2].innerHTML);
             var sens = this.cells[9].innerHTML;
@@ -358,7 +394,101 @@ var Enregistrer = function () {
         });
     }
 }
+var Valider = function () {
+    var isAllValid = true;
+    var dateDebut = $("#debut").val();
+    var dateFin = $("#fin").val();
+    var nbreCocher = $("#valueTotalQualCheck").val();
+    var validation = $(".validation:checked").val();
+    if (dateDebut.trim() == '') {
+        isAllValid = false;
+        $("#debut").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
+    } else {
+        const endDateD = document.getElementById('debut').value;
 
+        const yearD = endDateD.split('-')[0];
+        // Vérifier si l'année a 4 caractères
+        if (yearD.length === 4 && !isNaN(yearD)) {
+            $("#debut").siblings('span.erreur').css('display', 'none');
+        } else {
+            isAllValid = false;
+            $("#debut").siblings('span.erroeur').css('display', 'block').html('Revoir l\'année.');
+        }
+    }
+    if (dateFin.trim() == '') {
+        isAllValid = false;
+        $("#fin").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
+    } else {
+        $("#fin").siblings('span.erreur').css('display', 'none');
+        const startDate = document.getElementById('debut').value;
+        const endDate = document.getElementById('fin').value;
+        const resultElement = document.getElementById('messageStruct');
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const yearCloture = endDate.split('-')[0];
+        // Vérifier si l'année a 4 caractères
+        if (yearCloture.length === 4 && !isNaN(yearCloture)) {
+            resultElement.textContent = '';
+            if (end < start) {
+                isAllValid = false;
+                resultElement.textContent = 'La date fin doit être supérieure ou égale à la date début.';
+            }
+        } else {
+            isAllValid = false;
+            $("#fin").siblings('span.erreur').css('display', 'block').html('Revoir l\'année.');
+        }
+    }
+    if (document.getElementById('defaultCheck_Tous').checked == false && nbreCocher == 0) {
+        isAllValid = false;
+        document.getElementById('erreurCheck').textContent = "Veuillez cocher au moins";
+    }
+    compteurCheckBox();
+    if (isAllValid) {
+        document.getElementById('titleParam_').textContent = "Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin);
+        toggleForms("partieSecond");
+        var objData = {};
+        var listOfCaisseAffect = new Array();
+        switch (pageName) {
+            case "TabBord":
+                loadData(pageName);
+                break;
+            case "EditOperation":
+                $("#tab_Caisse").find("tr:gt(0)").each(function () {
+                    var OrderDetailCaisseAffect = {};
+                    if ($(this).find('td:eq(1) input').is(':checked') == true) {
+                        OrderDetailCaisseAffect.code = $(this).find('td:eq(0) input').val();
+                        listOfCaisseAffect.push(OrderDetailCaisseAffect);
+                    }
+                })
+                objData.listOfCaisseAffect = listOfCaisseAffect;
+                objData.dateDebut = dateDebut;
+                objData.dateFin = dateFin;
+                objData.compteur = nbreCocher;
+                objData.sens = validation;
+
+                $.ajax({
+                    async: true,
+                    type: 'POST',
+                    dataType: 'JSON',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(objData),
+                    url: '/CRUD/SendExploitation',
+                    success: function (data) {
+                        alert('Mario')
+                    },
+                    error: function (xhr, status, error) {
+                        clearInterval(interval); // Arrêter la simulation
+
+                        // Indiquer l'échec
+                        progressBar.css("width", "100%").css("background-color", "red").text("Erreur");
+                        console.log('La réponse a échoué : ' + error);
+                    }
+                })
+                break;
+        }
+    }
+}
 var Supprimer = function () {
     toggleForms("partieDelete");
     var nomTitre = "Suppression ";
@@ -477,18 +607,8 @@ function formVue(pageName) {
                         `;
             break;
         case "TabBord":
+        case "EditOperation":
             formHTML = `
-                        <div class="row">
-                            <div class="col-md-12" style="padding-bottom:10px">
-                                <div class="float-start" style="width:75%">
-                                    <div id="partieSite">
-                                    </div>
-                                </div>
-                                <div class="float-end">
-                                    <button class="btn btn-sm btn-primary" id="reloadTabBord" onclick="reloadTabBord()"> <i class="fas fa-reload mr-2"></i>Actualiser</button>
-                                </div>
-                            </div>
-                        </div>
                         <div class="row mb-2 justify-content-center" style="text-align:center">
                             <div class="col-md-12">
                                 <h4 id='messageStruct' style='color:red'></h4>
@@ -516,14 +636,14 @@ function formTableTOP(pageName) {
                             <label for="code1" id='labelCode1'>Caisse</label>
                         </div>
                         <div class="col-md-4">
-                            <select id="code1" style="width:100%" class="selectChoix">
+                            <select id="code1" style="width:100%;z-index:2500px" class="selectChoix SurPageDrop">
                             </select>
                         </div>
                         <div class="col-md-2">
                             <label for="code2" id='labelCode2'>Sens</label>
                         </div>
                         <div class="col-md-4">
-                            <select id="code2" style="width:100%" class="selectChoix">
+                            <select id="code2" style="width:100%" class="selectChoix SurPageDrop">
                                 <option value="E">Entrée</option>
                                 <option value="S">Sortie</option>
                             </select>
@@ -531,35 +651,7 @@ function formTableTOP(pageName) {
                     </div>
                 `;
             break;
-        case "TabBord":
-            formHTML = `
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label for="debutPeriode">Période du :</label>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="date" name="debutPeriode" value="" id="debutPeriode" class="input_focus"/>
-                            <span class="erreur"></span>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="FinPeriode">Au :</label>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="date" name="FinPeriode" value="" id="FinPeriode" class="input_focus"/>
-                            <span class="erreur"></span>
-                        </div>
-                    </div>
-                    <div class="row" style="padding-top:10px">
-                        <div class="col-md-3">
-                            <label for="code1">Caisses</label>
-                        </div>
-                        <div class="col-md-6">
-                            <select id="code1" style="width:100%" class="selectChoix">
-                            </select>
-                        </div>
-                    </div>
-                `;
-            break;
+        
     }
     $("#partieSite").append(formHTML);
 }
@@ -623,44 +715,161 @@ function formTableau(pageName) {
                             </div>
                         `;
             break;
-        case "TabBord":
+        
+        case "EditOperation":
             formHTML = `
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <div class="dt-responsive table-responsive">
-                                                <table id="tab_${pageName}" class="tabList" style="width:100%">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>CAISSE</th>
-                                                            <th>CODE</th>
-                                                            <th>Date</th>
-                                                            <th>Désignation</th>
-                                                            <th>Entrée</th>
-                                                            <th>Sortie</th>
-                                                            <th>Statut</th>
-                                                            <th>Saisi par</th>
-                                                            <th>Date Saisie</th>
-                                                            <th hidden>sens</th>
-                                                            <th hidden>observation</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody></tbody>
-                                                    <tfoot>
-                                                        <tr>
-                                                            <th colspan='4' style="text-align:center">Total</th>
-                                                            <th style='text-align:right'><span id="sumEntree" style="font-weight:bold;color:#fff"></span></th>
-                                                            <th style='text-align:right'><span id="sumSortie" style="font-weight:bold;color:#fff"></span></th>
-                                                            <th colspan='3'></th>
-                                                        </tr>
-                                                    </tfoot>
-                                                </table>
+                        <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row mb-2">
+                                            <div class="col-md-3">
+                                                <label for="debut">Période du :</label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="date" name="debut" value="" id="debut" class="input_focus" />
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="fin">Au </label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="date" name="fin" value="" id="fin" class="input_focus" />
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2 justify-content-center" style="text-align:center">
+                                            <div class="col-md-12">
+                                                <span id="messageStruct" style="color:red"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-8" style="padding:2px;background-color:#808080;">
+                                                <h5 style="color:#fff;letter-spacing:4px">Caisses</h5>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <input type="hidden" disabled name="valueTotalQualCheck" value="0" id="valueTotalQualCheck" class="form-control" style="background-color:#000;color:#fff" />
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-12">
+                                                <span id="erreurCheck" style="color:red"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-6">
+                                                <div class="Alltab_">
+                                                    <table class="tabEdit" id="tab_Caisse">
+                                                        <thead hidden>
+                                                            <tr>
+                                                                <td>CODE</td>
+                                                                <td>Etat</td>
+                                                                <td>Libelle</td>
+                                                            </tr>
+                                                        </thead>
+
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="padding-top:10px">
+                                            <div class="col-md-10" style="padding:10px;border:1px solid #cec8c8;border-radius:5px">
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <h5><u>Validation</u></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input validation" type="radio" checked name="validation" id="valid_1" value="N">
+                                                            <label class="form-check-label" for="valid_1">Non Validé</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input validation" type="radio" name="validation" id="valid_2" value="V">
+                                                            <label class="form-check-label" for="valid_2">Validé</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input validation" type="radio" name="validation" id="valid_3" value="R">
+                                                            <label class="form-check-label" for="valid_3">Refus</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input validation" type="radio" name="validation" id="valid_4" value="T">
+                                                            <label class="form-check-label" for="valid_4">Tous</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center;padding-top:15px">
+                                            <div class="col-md-12">
+                                                <button class="btn btn-sm btn-success" id="valider" onclick="Valider()">Valider</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                        `;
+            break;
+        case "TabBord":
+            formHTML = `
+                        <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row mb-2">
+                                            <div class="col-md-3">
+                                                <label for="debut">Période du :</label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="date" name="debut" value="" id="debut" class="input_focus" />
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="fin">Au </label>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="date" name="fin" value="" id="fin" class="input_focus" />
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2 justify-content-center" style="text-align:center">
+                                            <div class="col-md-12">
+                                                <span id="messageStruct" style="color:red"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-8" style="padding:2px;background-color:#808080;">
+                                                <h5 style="color:#fff;letter-spacing:4px">Caisses</h5>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <input type="hidden" disabled name="valueTotalQualCheck" value="" id="valueTotalQualCheck" class="form-control" style="background-color:#000;color:#fff" />
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-12">
+                                                <span id="erreurCheck" style="color:red"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center">
+                                            <div class="col-md-6">
+                                                <div class="Alltab_">
+                                                    <table class="tabEdit" id="tab_Caisse">
+                                                        <thead hidden>
+                                                            <tr>
+                                                                <td>CODE</td>
+                                                                <td>Etat</td>
+                                                                <td>Libelle</td>
+                                                                <td hidden>Libelle ok</td>
+                                                            </tr>
+                                                        </thead>
+
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row justify-content-center" style="text-align:center;padding-top:15px">
+                                            <div class="col-md-12">
+                                                <button class="btn btn-sm btn-success" id="valider" onclick="Valider()">Valider</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                         `;
             break;
     }
@@ -671,7 +880,7 @@ function formPopup(pageName) {
     switch (pageName) {
         case "Enregistrement":
         case "Caisse":
-        case "TabBord":
+        //case "TabBord":
             formHtml = `
                     <div class="row justify-content-center" style="padding-top:4%">
                         <div class="col-md-8 pageView">
@@ -705,9 +914,64 @@ function formPopup(pageName) {
                         </div>
                     </div>
                 `;
+            $("#partieUnique").append(formHtml);
+            break;
+        case "TabBord":
+            formHtml = `
+                           <div class="row justify-content-center" style="padding-top:4%">
+                                <div class="col-md-11 pageView">
+                                    <div class="row">
+                                        <div class="col-md-12" style="padding-bottom: 10px;border-bottom:1px solid #bdb8b8">
+                                            <div class="float-start">
+                                                <strong id="titleParam_"></strong>
+                                            </div>
+                                            <div class="float-end">
+                                                <button class="btn btn-sm  btn-danger me-1 mb-1" id="fermer">&times;Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="dt-responsive table-responsive">
+                                                        <table id="tab_${pageName}" class="tabList" style="width:100%">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>CAISSE</th>
+                                                                    <th>CODE</th>
+                                                                    <th>Date</th>
+                                                                    <th>Désignation</th>
+                                                                    <th>Entrée</th>
+                                                                    <th>Sortie</th>
+                                                                    <th>Statut</th>
+                                                                    <th>Saisi par</th>
+                                                                    <th>Date Saisie</th>
+                                                                    <th hidden>sens</th>
+                                                                    <th hidden>observation</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody></tbody>
+                                                            <tfoot>
+                                                                <tr>
+                                                                    <th colspan='4' style="text-align:center">Total</th>
+                                                                    <th style='text-align:right'><span id="sumEntree" style="font-weight:bold;color:#fff"></span></th>
+                                                                    <th style='text-align:right'><span id="sumSortie" style="font-weight:bold;color:#fff"></span></th>
+                                                                    <th colspan='3'></th>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> 
+                        `;
+            $("#partieSecond").append(formHtml);
             break;
     }
-    $("#partieUnique").append(formHtml);
 }
 function formPopupPartieSaisie(pageName) {
     let formHTML = "";
@@ -783,90 +1047,176 @@ function formPopupPartieSaisie(pageName) {
                         </div>
                         `;
             break;
+        
+    }
+    $("#zoneSaisie").append(formHTML);
+    switch (pageName) {
+        case "Enregistrement":
+        //case "TabBord":
+            var montant = document.getElementById('montant');
+            formatChiffreInput(montant);
+            var VueCheck = "";
+            switch (groupeUs) {
+                case "SAISIE":
+                    VueCheck = `
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="non_valide" value="N">
+                                            <label class="form-check-label" for="non_valide">Non validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_valide" value="V">
+                                            <label class="form-check-label" for="_valide">Validé</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                    break;
+                default:
+                    VueCheck = `
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="non_valide" value="N">
+                                            <label class="form-check-label" for="non_valide">Non validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_valide" value="V">
+                                            <label class="form-check-label" for="_valide">Validé</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input typeValid" type="radio" name="validation_" id="_refus" value="R">
+                                            <label class="form-check-label" for="_refus">Refus</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                    break;
+            }
+            $("#userVue").append(VueCheck);
+            break;
+    }
+}
+function formPopupTabBord(pageName) {
+    let formHTML = "";
+    switch (pageName) {
         case "TabBord":
             formHTML = `
-                        <div class="row" style="padding-top:10px">
-                            <div class="col-md-3">
-                                <input type="hidden"  name="code" disabled value="" id="code" class="input_focus"/>
-                            </div>
-                        </div>
-                        <div class="row" style="padding-top:10px">
-                            <div class="col-md-3">
-                                <label for="caisse">Caisses</label>
-                            </div>
-                            <div class="col-md-6">
-                                <select id="caisse" style="width:100%" class="selectChoix">
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
+                        <div class="row justify-content-center" style="padding-top:4%">
+                            <div class="col-md-8 pageView">
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <label for="dateSaisie">Date</label>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <input type="date" name="dateSaisie" value="" id="dateSaisie" class="input_focus"/>
-                                        <span class="erreur"></span>
+                                    <div class="col-md-12" style="padding-bottom: 10px;border-bottom:1px solid #bdb8b8">
+                                        <div class="float-start">
+                                            <strong id="titleParam_"></strong>
+                                        </div>
+                                        <div class="float-end">
+                                            <button class="btn btn-sm  btn-danger me-1 mb-1" id="fermerTab">&times;Fermer</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <label for="montant">Montant</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="montant" value="" maxlength="12" id="montant" class="input_focus"/>
-                                        <span class="erreur"></span>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <label for="description">Description</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="description" value="" maxlength="250" id="description" class="input_focus"/>
-                                        <span class="erreur"></span>
+                                <div class="row justify-content-center" style="text-align:center">
+                                    <div class="col-md-12">
+                                        <div class="alert_Param hide">
+                                            <span class="fas fa-exclamation-circle"></span>
+                                            <span class="result_Param"></span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row" style="padding-top:10px">
-                                    <div class="col-md-5" style="border:1px solid #ccc0c0">
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <h6>Sens</h6>
+                                <div class="form_padd">
+                                    <div id="zoneSaisie">
+                                        <div class="row" style="padding-top:10px">
+                                            <div class="col-md-3">
+                                                <input type="hidden" name="code" disabled value="" id="code" class="input_focus" />
+                                            </div>
+                                        </div>
+                                        <div class="row" style="padding-top:10px">
+                                            <div class="col-md-3">
+                                                <label for="caisse">Caisses</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select id="caisse" style="width:100%" class="selectChoix">
+                                                </select>
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensDep" value="S">
-                                                    <label class="form-check-label" for="SensDep">Dépense</label>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label for="dateSaisie">Date</label>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input type="date" name="dateSaisie" value="" id="dateSaisie" class="input_focus" />
+                                                        <span class="erreur"></span>
+                                                    </div>
                                                 </div>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensRec" value="E">
-                                                    <label class="form-check-label" for="SensRec">Recette</label>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label for="montant">Montant</label>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <input type="text" name="montant" value="" maxlength="12" id="montant" class="input_focus" />
+                                                        <span class="erreur"></span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-1">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label for="description">Description</label>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <input type="text" name="description" value="" maxlength="250" id="description" class="input_focus" />
+                                                        <span class="erreur"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="row" style="padding-top:10px">
+                                                    <div class="col-md-5" style="border:1px solid #ccc0c0">
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <h6>Sens</h6>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensDep" value="S">
+                                                                    <label class="form-check-label" for="SensDep">Dépense</label>
+                                                                </div>
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input typeSens" type="radio" name="sens_" id="SensRec" value="E">
+                                                                    <label class="form-check-label" for="SensRec">Recette</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-1">
 
-                                    </div>
-                                    <div class="col-md-5"style="border:1px solid #ccc0c0">
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <h6>Validation</h6>
+                                                    </div>
+                                                    <div class="col-md-5" style="border:1px solid #ccc0c0">
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <h6>Validation</h6>
+                                                            </div>
+                                                        </div>
+                                                        <div id="userVue">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row" style="padding-top:10px">
+                                                    <div class="col-md-2">
+                                                        <label for="observation">Observation</label>
+                                                    </div>
+                                                    <div class="col-md-10">
+                                                        <input type="text" name="observation" value="" id="observation" maxlength="250" class="input_focus" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div id="userVue">
+                                    </div>
+                                    <div class="row justify-content-end" style="text-align:right;padding-top:15px">
+                                        <div class="col-md-12">
+                                            <button class="btn btn-sm btn-success me-1 mb-1" id="Enregistrer" onclick="Enregistrer()">Enregistrer</button>
+                                            <button class="btn btn-sm btn-danger me-1 mb-1" id="Supprimer" onclick="Supprimer()">Supprimer</button>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="row" style="padding-top:10px">
-                                    <div class="col-md-2">
-                                        <label for="observation">Observation</label>
-                                    </div>
-                                    <div class="col-md-10">
-                                        <input type="text" name="observation" value="" id="observation" maxlength="250" class="input_focus"/>
                                     </div>
                                 </div>
                             </div>
@@ -874,9 +1224,8 @@ function formPopupPartieSaisie(pageName) {
                         `;
             break;
     }
-    $("#zoneSaisie").append(formHTML);
+    $("#partieUnique").append(formHTML);
     switch (pageName) {
-        case "Enregistrement":
         case "TabBord":
             var montant = document.getElementById('montant');
             formatChiffreInput(montant);
@@ -922,6 +1271,16 @@ function formPopupPartieSaisie(pageName) {
             $("#userVue").append(VueCheck);
             break;
     }
+
+    $("#fermerTab").click(function () {
+        switch (pageName) {
+            case "TabBord":
+                toggleForms("partieSecond");
+                $("#partieUnique").empty();
+                break;
+        }
+    })
+    $("#caisse").select2();
 }
 function formDel() {
     let container = document.getElementById("partieDelete");
@@ -1010,7 +1369,7 @@ function afficherDateddMMyyyy(date) {
 }
 function toggleForms(showId) {
     // Liste des IDs des formulaires
-    let forms = ["partieUnique", "partieDelete"];
+    let forms = ["partieUnique", "partieDelete", "partieSecond"];
     document.getElementById('fullscreen_popup').style.display = "block";
     forms.forEach(id => {
         let elem = document.getElementById(id);
@@ -1042,6 +1401,9 @@ function resetForm() {
             $("#code").val('');
             $("#libelle").val('');
             document.getElementById('code').disabled = false;
+            break;
+        case "TabBord":
+            toggleForms("partieSecond");
             break;
     }
     document.getElementById('Supprimer').style.visibility = "hidden";
@@ -1084,31 +1446,42 @@ function formatChiffreInput(input) {
     });
 }
 function loadData(pageName) {
-    var code1 = null, sens = null, date1 = null, date2 = null;
+    var code1 = null, sens = null, date1 = null, date2 = null, nbreCocher = null;
+    var listOfCaisseAffect = new Array();
     switch (pageName) {
         case "Enregistrement":
             code1 = $("#code1").val();
             sens = $("#code2").val();
             break;
         case "TabBord":
-            code1 = $("#code1").val();
-            date1 = $("#debutPeriode").val();
-            date2 = $("#FinPeriode").val();
+            date1 = $("#debut").val();
+            date2 = $("#fin").val();
+            $("#tab_Caisse").find("tr:gt(0)").each(function () {
+                var OrderDetailCaisseAffect = {};
+                if ($(this).find('td:eq(1) input').is(':checked') == true) {
+                    OrderDetailCaisseAffect.code = $(this).find('td:eq(0) input').val();
+                    listOfCaisseAffect.push(OrderDetailCaisseAffect);
+                }
+            })
+            nbreCocher = $("#valueTotalQualCheck").val();
             break;
     }
+    var objData = {};
+
+    objData.page = pageName;
+    objData.code = code1;
+    objData.sens = sens;
+    objData.date1 = date1;
+    objData.date2 = date2;
+    objData.compteur = nbreCocher;
+    objData.listOfCaisseAffect = listOfCaisseAffect;
     $.ajax({
         async: true,
-        type: 'GET',
+        type: 'POST',
         dataType: 'JSON',
         contentType: 'application/json; charset=utf-8',
-        data: {
-            code: code1,
-            sens: sens,
-            page: pageName,
-            date1: date1,
-            date2: date2,
-        },
-        url: '/CRUD/GetDataParam',
+        data: JSON.stringify(objData),
+        url: "/CRUD/GetDataParam",
         success: function (data) {
             reportData(data);
         }
@@ -1123,14 +1496,71 @@ function reportData(data) {
                 document.getElementById('Ajout').disabled = false;
             }
             break;
+        case "EditOperation":
+        case "TabBord":
+            const table = document.querySelector("#tab_Caisse");
+            
+            if (table && table.rows.length == 1) {
+                var listCaisse = $("#tab_Caisse");
+                listCaisse.empty(); // Nettoie le tableau avant ajout
+
+                // ➕ Ajout de la ligne "Tous" en premier
+                var ligneTous = `
+                <tr>
+                    <td hidden>
+                        <input type='text' name='name' value="Tous" />
+                    </td>
+                    <td>
+                        <div class='form-check'>
+                            <input class='form-check-input cursorPointer' type='checkbox' checked name='' value='' id='defaultCheck_Tous'>
+                        </div>
+                    </td>
+                    <td style="text-align:left">
+                        <div class='form-check'>
+                            <label class='form-check-label cursorPointer' for='defaultCheck_Tous'>
+                                Tous
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+            `;
+                listCaisse.append(ligneTous);
+
+                // 🔁 Ajout des autres caisses
+                for (var i = 0; i < data.listCaisse.length; i++) {
+                    var item = data.listCaisse[i];
+                    var list = `
+                    <tr>
+                        <td hidden>
+                            <input type='text' name='name' value="${item.code}" />
+                        </td>
+                        <td>
+                            <div class='form-check'>
+                                <input class='form-check-input cursorPointer' type='checkbox' name='check' value='' id='defaultCheck_${item.code}'>
+                            </div>
+                        </td>
+                        <td style="text-align:left">
+                            <div class='form-check cursorPointer'>
+                                <label class='form-check-label' for='defaultCheck_${item.code}'>
+                                    ${item.libelle}
+                                </label>
+                            </div>
+                        </td>
+                        <td hidden>${item.libelle}</td>
+                    </tr>
+                `;
+                    listCaisse.append(list);
+                }
+            }
+            break;
     }
     if ($("#code1").val() == "" || $("#code1").val() == null) {
         $('#code1').empty();
-        switch (pageName) {
-            case "TabBord":
-                $("#code1").append("<option value='Tout'>Tout</option>");
-                break;
-        }
+        //switch (pageName) {
+        //    case "TabBord":
+        //        $("#code1").append("<option value='Tout'>Tout</option>");
+        //        break;
+        //}
         $.each(data.listCaisse, function (index, row) {
             $("#code1").append("<option value='" + row.code + "'>" + row.libelle + "</option>");
         })
@@ -1271,4 +1701,17 @@ function separateur_mil(nStr) {
         x1 = x1.replace(rgx, '$1' + ' ' + '$2');
     }
     return x1 + x2;
+}
+function compteurCheckBox() {
+    var dbRes = [];
+    var nbre_check = 0;
+    var dbEl = document.getElementsByName("check");
+    for (i = 0; i < dbEl.length; i++) {
+        if (dbEl[i].checked) {
+            dbRes.push(dbEl[i].value);
+            nbre_check++;
+        }
+    }
+    $("#valueTotalQualCheck").val(nbre_check);
+    //console.log(`Il y a ${nbre_check} cases à cocher cochées.`);
 }

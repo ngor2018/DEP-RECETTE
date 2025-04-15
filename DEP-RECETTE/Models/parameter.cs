@@ -25,6 +25,9 @@ namespace DEP_RECETTE.Models
         public string UserValid { get; set; }
         public string Signature { get; set; }
         public string sens { get; set; }
+        public string page { get; set; }
+        public string date1 { get; set; }
+        public string date2 { get; set; }
         public string observation { get; set; }
         public string valider { get; set; }
         public string typeSens { get; set; }

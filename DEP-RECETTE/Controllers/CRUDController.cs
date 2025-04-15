@@ -212,9 +212,20 @@ namespace DEP_RECETTE.Controllers
             }
             return Json(new { statut = isAllValid, message = result }, JsonRequestBehavior.AllowGet);
         }
-        [HttpGet]
-        public JsonResult GetDataParam(string page, string code,string sens,string date1,string date2)
+        [HttpPost]
+        public JsonResult GetDataParam(parameter tabData)
         {
+            string page = tabData.page;
+            string code = tabData.code;
+            string sens = tabData.sens;
+            string date1 = tabData.date1;
+            string date2 = tabData.date2;
+            var tab = tabData.listOfCaisseAffect; 
+            string compteur = tabData.compteur;
+            if (compteur == null)
+            {
+                compteur = "0";
+            }
             List<parameter> listData = new List<parameter>();
             List<parameter> listCaisse = new List<parameter>();
             DataTable objTab = new DataTable();
@@ -257,18 +268,8 @@ namespace DEP_RECETTE.Controllers
                     }
                     break;
                 case "TabBord":
-                    tableInstance = new TABLES.MOPERCAISSE();
-                    foreach (DataRow row in dtUserCaisse.Rows)
-                    {
-                        listCaisse.Add(new parameter()
-                        {
-                            code = row["code"].ToString(),
-                            libelle = row["libelle"].ToString()
-                        });
-                    }
-                    break;
                 case "EditOperation":
-                    //tableInstance = new TABLES.MOPERCAISSE();
+                    tableInstance = new TABLES.MOPERCAISSE();
                     foreach (DataRow row in dtUserCaisse.Rows)
                     {
                         listCaisse.Add(new parameter()
@@ -319,7 +320,8 @@ namespace DEP_RECETTE.Controllers
                             }
                             string dateDebut = d1.ToString("dd-MM-yyyy");
                             string dateFin = d2.ToString("dd-MM-yyyy");
-                            if (code == "Tout")
+                            //if (code == "Tous" && (tab == null || tab.Count == 0) && compteur == 0)
+                            if (compteur == "0")
                             {
                                 if (groupe == "SAISIE")
                                 {
@@ -332,13 +334,17 @@ namespace DEP_RECETTE.Controllers
                             }
                             else
                             {
+                                var caissesFiltrees = tab?.Select(t => $"CAISSE = '{t.code}'").ToList() ?? new List<string>();
+                                var conditionCaisses = string.Join(" OR ", caissesFiltrees);
+
+
                                 if (groupe == "SAISIE")
                                 {
-                                    filtre = $"CAISSE = '{code}' AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' and Valider = 'N'";
+                                    filtre = $"({conditionCaisses}) AND UserCre = '{login}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}' and Valider = 'N'";
                                 }
                                 else
                                 {
-                                    filtre = $"CAISSE = '{code}' AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
+                                    filtre = $"({conditionCaisses}) AND dateSaisie >= '{dateDebut}' AND dateSaisie <= '{dateFin}'";
                                 }
                             }
 

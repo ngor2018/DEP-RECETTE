@@ -76,6 +76,7 @@ var Valider = function () {
         isAllValid = false;
         document.getElementById('erreurCheck').textContent = "Veuillez cocher au moins";
     }
+    compteurCheckBox();
     if (isAllValid) {
         var objData = {};
         var listOfCaisseAffect = new Array();

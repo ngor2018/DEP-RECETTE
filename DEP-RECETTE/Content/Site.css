@@ -221,6 +221,18 @@ thead, tbody, tfoot, tr, td, th {
     padding-top: 10px;
     padding-bottom: 10px
 }
+/*.select2-container {
+    z-index: 2001 !important;
+}
+
+.select2-dropdown {
+    z-index: 2001 !important;
+}*/
+
+
+.SurPageDrop + .select2-container {
+    z-index: 1025 !important;
+}
 
 #fullscreen_popup {
     z-index: 2000;
