@@ -132,18 +132,24 @@ $("#tab_" + pageName + " tbody").on("click", "tr", function () {
             switch (this.cells[6].innerHTML) {
                 case "N":
                     document.getElementById('non_valide').checked = true;
+                    document.getElementById('Enregistrer').style.visibility = "visible";
+                    document.getElementById('Supprimer').style.visibility = "visible";
                     break;
                 case "V":
                     document.getElementById('_valide').checked = true;
+                    document.getElementById('Enregistrer').style.visibility = "hidden";
+                    document.getElementById('Supprimer').style.visibility = "hidden";
                     break;
                 case "R":
                     document.getElementById('_refus').checked = true;
+                    document.getElementById('Enregistrer').style.visibility = "visible";
+                    document.getElementById('Supprimer').style.visibility = "visible";
                     break;
             }
             break;
     }
     $("#titleParam_").html(nomTitre);
-    document.getElementById('Supprimer').style.visibility = "visible";
+    //document.getElementById('Supprimer').style.visibility = "visible";
 })
 $(".selectChoix").select2();
 $("#code1").change(function () {
@@ -374,7 +380,14 @@ var Enregistrer = function () {
                             $('.alert_Param').addClass("hide");
                             $('.alert_Param').removeClass("show");
                             loadData(pageName);
-                            document.getElementById('fermer').click();
+                            switch (pageName) {
+                                case "TabBord":
+                                    document.getElementById('fermerTab').click();
+                                    break;
+                                default:
+                                    document.getElementById('fermer').click();
+                                    break;
+                            }
                         }, 1500);
                         break;
                     default:
@@ -445,8 +458,7 @@ var Valider = function () {
     }
     compteurCheckBox();
     if (isAllValid) {
-        document.getElementById('titleParam_').textContent = "Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin);
-        toggleForms("partieSecond");
+        
         var objData = {};
         var listOfCaisseAffect = new Array();
         switch (pageName) {
@@ -475,13 +487,71 @@ var Valider = function () {
                     data: JSON.stringify(objData),
                     url: '/CRUD/SendExploitation',
                     success: function (data) {
-                        alert('Mario')
+                        switch (data.statut) {
+                            case true:
+                                toggleForms("partieSecond");
+                                document.getElementById('titleParam_').textContent = "Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin);
+                                $('#tab_' + pageName).DataTable().destroy();
+                                $("#tab_" + pageName + " tbody").empty();
+
+                                for (var i = 0; i < data.donnee.length; i++) {
+                                    var item = data.donnee[i];
+                                    var FLAG = item.FLAG;
+                                    var entree = item.entree;
+                                    var sortie = item.sortie;
+                                    var solde = item.solde;
+                                    if (entree == "0") {
+                                        entree = "";
+                                    } 
+                                    if (sortie == "0") {
+                                        sortie = "";
+                                    } 
+                                    if (solde == "0") {
+                                        solde = "";
+                                    } 
+                                    var couleur = '';
+
+                                    switch (FLAG) {
+                                        case "C":
+                                            couleur = "#00ffff"; // cyan
+                                            break;
+                                        case "D":
+                                            couleur = "#fefefe"; // presque blanc
+                                            break;
+                                        case "T":
+                                            couleur = "#ffdab9"; // pêche clair
+                                            break;
+                                        case "G":
+                                            couleur = "#808000"; // olive
+                                            break;
+                                        default:
+                                            couleur = "#ffffff"; // blanc par défaut
+                                            break;
+                                    }
+
+                                    var list = `
+                                                    <tr style="background-color: ${couleur}">
+                                                        <td>${item.caisse}</td>
+                                                        <td>${item.date1}</td>
+                                                        <td>${item.Designation}</td>
+                                                        <td style="text-align:right">${separateur_mil(entree)}</td>
+                                                        <td style="text-align:right">${separateur_mil(sortie)}</td>
+                                                        <td style="text-align:right">${separateur_mil(solde)}</td>
+                                                    </tr>                                                
+                                                `;
+                                    $("#tab_" + pageName + " tbody").append(list);
+                                }
+
+                                break;
+                            default:
+                                document.getElementById('errorEditOper').textContent = data.message;
+                                setTimeout(function () {
+                                    document.getElementById('errorEditOper').textContent = "";
+                                },2500)
+                                break;
+                        }
                     },
                     error: function (xhr, status, error) {
-                        clearInterval(interval); // Arrêter la simulation
-
-                        // Indiquer l'échec
-                        progressBar.css("width", "100%").css("background-color", "red").text("Erreur");
                         console.log('La réponse a échoué : ' + error);
                     }
                 })
@@ -540,15 +610,29 @@ var validerDel = function () {
             switch (data.statut) {
                 case true:
                     var table = document.getElementById('tab_' + pageName);
-                    for (var i = 1; i < table.rows.length; i++) {
-                        var item = table.rows[i];
-                        if (item.cells[0].innerHTML == code) {
-                            table.deleteRow(i); //Supprimer la ligne correspondante
-                            break; //Sort de la boucle apres supppression
-                        }
-                    }
                     closeDel();
-                    document.getElementById('fermer').click();
+                    switch (pageName) {
+                        case "TabBord":
+                            document.getElementById('fermerTab').click();
+                            for (var i = 1; i < table.rows.length; i++) {
+                                var item = table.rows[i];
+                                if (item.cells[1].innerHTML == code) {
+                                    table.deleteRow(i); //Supprimer la ligne correspondante
+                                    break; //Sort de la boucle apres supppression
+                                }
+                            }
+                            break;
+                        default:
+                            for (var i = 1; i < table.rows.length; i++) {
+                                var item = table.rows[i];
+                                if (item.cells[0].innerHTML == code) {
+                                    table.deleteRow(i); //Supprimer la ligne correspondante
+                                    break; //Sort de la boucle apres supppression
+                                }
+                            }
+                            document.getElementById('fermer').click();
+                            break;
+                    }
                     switch (pageName) {
                         case "Enregistrement":
                             var total = 0;
@@ -799,6 +883,11 @@ function formTableau(pageName) {
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="row justify-content-center" style="text-align:center"> 
+                                            <div class="col-md-12"> 
+                                                <span id="errorEditOper" style="color:red"></span> 
+                                            </div> 
+                                        </div> 
                                         <div class="row justify-content-center" style="text-align:center;padding-top:15px">
                                             <div class="col-md-12">
                                                 <button class="btn btn-sm btn-success" id="valider" onclick="Valider()">Valider</button>
@@ -964,6 +1053,55 @@ function formPopup(pageName) {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> 
+                        `;
+            $("#partieSecond").append(formHtml);
+            break;
+        case "EditOperation":
+            formHtml = `
+                           <div class="row justify-content-center" style="padding-top:4%">
+                                <div class="col-md-11 pageView">
+                                    <div class="row">
+                                        <div class="col-md-12" style="padding-bottom: 10px;border-bottom:1px solid #bdb8b8">
+                                            <div class="float-start">
+                                                <strong id="titleParam_"></strong>
+                                            </div>
+                                            <div class="float-end">
+                                                <button class="btn btn-sm  btn-danger me-1 mb-1" id="fermer">&times;Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="dt-responsive table-responsive" style="max-height: 250px; overflow-y: auto">
+                                                        <table id="tab_${pageName}" class="tabList" style="width:100%">
+                                                            <thead class="sticky-top bg-white">
+                                                                <tr>
+                                                                    <th>CAISSE</th>
+                                                                    <th>Date</th>
+                                                                    <th>Désignation</th>
+                                                                    <th>Entrée</th>
+                                                                    <th>Sortie</th>
+                                                                    <th>Solde</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row justify-content-end" style="text-align:right">
+                                        <div class="col-md-12">
+                                            <button class="btn btn-sm btn-success" onclick="ImprimerEdit()">
+                                                <i class="fa fa-print">Imprimer</i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

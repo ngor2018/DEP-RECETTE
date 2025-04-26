@@ -162,6 +162,7 @@ namespace DEP_RECETTE.Controllers
             var debut = d1.ToString("dd-MM-yyyy");
             var fin = d2.ToString("dd-MM-yyyy");
             var compteur = Convert.ToInt32(objData.compteur);
+            List<parameter> listData = new List<parameter>();
 
             EXPLOITATIONS.TableauBORD.structParametres structTabBord = new EXPLOITATIONS.TableauBORD.structParametres();
             EXPLOITATIONS.TableauBORD mExploitation = new EXPLOITATIONS.TableauBORD();
@@ -206,11 +207,31 @@ namespace DEP_RECETTE.Controllers
             {
                 isAllValid = false;
             }
+            else
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    var dateC = row["Date"] == DBNull.Value || string.IsNullOrWhiteSpace(row["Date"].ToString())
+                                        ? ""
+                                        : DateTime.Parse(row["Date"].ToString()).ToString("dd/MM/yyyy");
+                    listData.Add(new parameter()
+                    {
+                        caisse = row["CAISSE"].ToString(),
+                        date1 = dateC,
+                        Designation = row["Designation"].ToString(),
+                        entree = row["RECETTE"].ToString(),
+                        sortie = row["DEPENSE"].ToString(),
+                        solde = row["SOLDE"].ToString(),
+                        FLAG = row["FLAG"].ToString(),
+
+                    });
+                }
+            }
             if (!isAllValid)
             {
                 result = "Aucun enregistrement n'a été trouvé";
             }
-            return Json(new { statut = isAllValid, message = result }, JsonRequestBehavior.AllowGet);
+            return Json(new { statut = isAllValid, message = result, donnee = listData }, JsonRequestBehavior.AllowGet);
         }
         [HttpPost]
         public JsonResult GetDataParam(parameter tabData)
