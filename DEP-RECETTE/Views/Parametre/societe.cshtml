@@ -42,6 +42,14 @@
                         <span id="error_img_2" style="color:red"></span>
                     </div>
                 </div>
+                <div class="row justify-content-center" style="text-align:center">
+                    <div class="col-md-12">
+                        <div class="alert_Param hide">
+                            <span class="fas fa-exclamation-circle"></span>
+                            <span class="result_Param"></span>
+                        </div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-12">
                         <h5>Identification</h5>
@@ -55,6 +63,7 @@
                             </div>
                             <div class="col-md-9">
                                 <input type="text" name="libelleProjet" value="" id="libelleProjet" class="form-control input_focus" />
+                                <span class="erreur"></span>
                             </div>
                         </div>
                         <div class="row mb-1">
@@ -71,6 +80,7 @@
                             </div>
                             <div class="col-md-9">
                                 <input type="text" name="sigle" value="" id="sigle" class="form-control input_focus" />
+                                <span class="erreur"></span>
                             </div>
                         </div>
                     </div>
@@ -121,29 +131,27 @@
                                     <div class="col-md-3">
                                         <label for="telephone">Téléphone</label>
                                     </div>
-                                    <div class="col-md-9">
+                                    <div class="col-md-3">
                                         <input type="text" name="telephone" value="" id="telephone" class="form-control input_focus" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="fax">FAX</label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="fax" value="" id="fax" class="form-control input_focus" />
                                     </div>
                                 </div>
                                 <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="fax">FAX</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="text" name="fax" value="" id="fax" class="form-control input_focus" />
-                                    </div>
                                     <div class="col-md-3">
                                         <label for="BoitePostale">Boite postale</label>
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" name="BoitePostale" value="" id="BoitePostale" class="form-control input_focus" />
                                     </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <label for="email">Email</label>
                                     </div>
-                                    <div class="col-md-9">
+                                    <div class="col-md-4">
                                         <input type="text" name="email" value="" id="email" class="form-control input_focus" />
                                     </div>
                                 </div>
@@ -154,10 +162,10 @@
                                     <div class="col-md-3">
                                         <input type="text" name="ninea" value="" id="ninea" class="form-control input_focus" />
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <label for="rc">RC</label>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <input type="text" name="rc" value="" id="rc" class="form-control input_focus" />
                                     </div>
                                 </div>
@@ -177,96 +185,6 @@
                                         <input type="text" name="siteWeb" value="" id="siteWeb" class="form-control input_focus" />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-12">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5>Société transport</h5>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 border_form">
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="raisonSocial">Raison sociale</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="raisonSocial" value="" id="raisonSocial" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="adresseTranport">Adresse</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="adresseTranport" value="" id="adresseTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="TelTranport">Téléphone</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="TelTranport" value="" id="TelTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="faxTranport">FAX</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="text" name="faxTranport" value="" id="faxTranport" class="form-control input_focus" />
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="BoitePostalTranport">Boite postale</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="text" name="BoitePostalTranport" value="" id="BoitePostalTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="EmailTranport">Email</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="EmailTranport" value="" id="EmailTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="nineaTranport">Ninéa</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="text" name="nineaTranport" value="" id="nineaTranport" class="form-control input_focus" />
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="RCTranport">RC</label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="text" name="RCTranport" value="" id="RCTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="CpteBancTranport">Compte bancaire</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="CpteBancTranport" value="" id="CpteBancTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-3">
-                                        <label for="SiteWebTranport">Site Web</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="SiteWebTranport" value="" id="SiteWebTranport" class="form-control input_focus" />
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
                     </div>
@@ -299,6 +217,100 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5>Société transport</h5>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 border_form">
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="raisonSocial">Raison sociale</label>
+                            </div>
+                            <div class="col-md-9">
+                                <input type="text" name="raisonSocial" value="" id="raisonSocial" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="adresseTranport">Adresse</label>
+                            </div>
+                            <div class="col-md-9">
+                                <input type="text" name="adresseTranport" value="" id="adresseTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="TelTranport">Téléphone</label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="TelTranport" value="" id="TelTranport" class="form-control input_focus" />
+                            </div>
+                            <div class="col-md-2">
+                                <label for="faxTranport">FAX</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="faxTranport" value="" id="faxTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="BoitePostalTranport">Boite postale</label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="BoitePostalTranport" value="" id="BoitePostalTranport" class="form-control input_focus" />
+                            </div>
+                            <div class="col-md-2">
+                                <label for="EmailTranport">Email</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="EmailTranport" value="" id="EmailTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="nineaTranport">Ninéa</label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="nineaTranport" value="" id="nineaTranport" class="form-control input_focus" />
+                            </div>
+                            <div class="col-md-2">
+                                <label for="RCTranport">RC</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="RCTranport" value="" id="RCTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="CpteBancTranport">Compte bancaire</label>
+                            </div>
+                            <div class="col-md-9">
+                                <input type="text" name="CpteBancTranport" value="" id="CpteBancTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+                        <div class="row mb-1">
+                            <div class="col-md-3">
+                                <label for="SiteWebTranport">Site Web</label>
+                            </div>
+                            <div class="col-md-9">
+                                <input type="text" name="SiteWebTranport" value="" id="SiteWebTranport" class="form-control input_focus" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center" style="text-align:center;padding-bottom:8px">
+            <div class="col-md-12">
+                <button class="btn btn-sm btn-success" id="Enregistrer" onclick="Enregistrer()">Enregistrer</button>
             </div>
         </div>
     </div>

@@ -1,0 +1,77 @@
+﻿<style>
+    #contenue_Confirm_GenerePaie {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        overflow-y: scroll;
+        overflow-x: hidden;
+        z-index: 3000;
+    }
+</style>
+
+
+<div class="row justify-content-center" style="text-align:center;margin-top:25px">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="fileBDD">Fichier de sauvegarde (.bak) :</label>
+            </div>
+            <div class="col-md-9">
+                <input type="file" name="fileBDD" id="fileBDD" class="form-control" accept=".bak" required />
+                <span class="erreur"></span>
+            </div>
+        </div>
+        <div class="row" style="padding-top:15px">
+            <div class="col-md-12">
+                <button onclick="LanceRestaurer()" class="btn btn-sm btn-success">Lancer la restauration</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="contenue_Confirm_GenerePaie">
+    <div class="row justify-content-center" style="padding-top:80px">
+        <div class="col-md-6" style="border: 1px solid #f1f3f7;border-radius:8px;padding-bottom:10px;background-color:#f1f3f7">
+            <div class="row" style="padding-top:8px;padding-bottom:8px;">
+                <div class="col-md-12">
+                    <span style="color:#000">Restauration</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="hidden" name="phaseFinpronet" value="" id="phaseFinpronet" class="form-control" />
+                </div>
+            </div>
+            <div class="row justify-content-start" style="text-align:left">
+                <div class="col-md-12" style="height:100px;background-color:#fff;padding-top:15px">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <img src="~/images/question.png" alt="" style="width:40px" />
+                            <span id="messageGener"></span>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center" style="text-align:center;padding-bottom:10px">
+                        <div class="col-md-12">
+                            <div class="alert_Param hide">
+                                <span class="fas fa-exclamation-circle"></span>
+                                <span class="result_Param"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="padding-top:10px;text-align:right">
+                <div class="col-md-12">
+                    <div class="float-right">
+                        <button class="btn btn-sm btn-success" onclick="ValiderRestauration()" id="ValiderRestauration">&nbsp;&nbsp;Oui&nbsp;&nbsp;</button>
+                        <button class="btn btn-sm btn-danger" id="AnnulerRestaure">&nbsp;&nbsp;Non&nbsp;&nbsp;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/Utilitaires/saveRestaureBDD.js"></script>

@@ -36,18 +36,25 @@ namespace DEP_RECETTE.Controllers
         {
             var login = objData.login;
             int etat = 0;
-            TABLES.rUser rUser = new TABLES.rUser();
-            var filtre = $"Login = '{login}'";
-            DataTable objTable = rUser.RemplirDataTable(filtre);
-            if (objTable.Rows.Count > 0)
+            try
             {
-                var loginActuel = (string)objTable.Rows[0][TABLES.rUser.GetChamp.Login.ToString()];
-                if (login == loginActuel)
+                TABLES.rUser rUser = new TABLES.rUser();
+                var filtre = $"Login = '{login}'";
+                DataTable objTable = rUser.RemplirDataTable(filtre);
+                if (objTable.Rows.Count > 0)
                 {
-                    string password = objTable.Rows[0][TABLES.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
-                    if (password == "" || password == null)
+                    var loginActuel = (string)objTable.Rows[0][TABLES.rUser.GetChamp.Login.ToString()];
+                    if (login == loginActuel)
                     {
-                        etat = 1;
+                        string password = objTable.Rows[0][TABLES.rUser.GetChamp.PassWord.ToString()] as string ?? string.Empty;
+                        if (password == "" || password == null)
+                        {
+                            etat = 1;
+                        }
+                        else
+                        {
+                            etat = 2;
+                        }
                     }
                     else
                     {
@@ -59,9 +66,10 @@ namespace DEP_RECETTE.Controllers
                     etat = 2;
                 }
             }
-            else
+            catch (Exception ex)
             {
-                etat = 2;
+
+                throw;
             }
             return Json(new { statut = etat }, JsonRequestBehavior.AllowGet);
         }

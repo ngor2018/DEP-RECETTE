@@ -413,26 +413,68 @@ var Valider = function () {
     var dateFin = $("#fin").val();
     var nbreCocher = $("#valueTotalQualCheck").val();
     var validation = $(".validation:checked").val();
-    if (dateDebut.trim() == '') {
-        isAllValid = false;
-        $("#debut").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
-    } else {
-        const endDateD = document.getElementById('debut').value;
 
-        const yearD = endDateD.split('-')[0];
-        // Vérifier si l'année a 4 caractères
-        if (yearD.length === 4 && !isNaN(yearD)) {
-            $("#debut").siblings('span.erreur').css('display', 'none');
-        } else {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateDebut)) {
+        isAllValid = false;
+        $("#debut").siblings('span.erreur').html('Invalide.').css('display', 'block');
+        //$("#debut").siblings('span.erreur').html('Format attendu : yyyy-MM-dd.').css('display', 'block');
+    } else {
+        const [yearStr, monthStr, dayStr] = dateDebut.split("-");
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        const day = parseInt(dayStr, 10);
+
+        if (month < 1 || month > 12) {
             isAllValid = false;
-            $("#debut").siblings('span.erroeur').css('display', 'block').html('Revoir l\'année.');
+            $("#debut").siblings('span.erreur').html('Mois invalide (valeur entre 1 et 12 attendue).').css('display', 'block');
+        } else if (day < 1 || day > 31) {
+            isAllValid = false;
+            $("#debut").siblings('span.erreur').html('Jour invalide (valeur entre 1 et 31 attendue).').css('display', 'block');
+        } else {
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+                if (month === 2 && day === 29) {
+                    isAllValid = false;
+                    $("#debut").siblings('span.erreur').html(`L'année ${year} n'est pas bissextile.`).css('display', 'block');
+                } else {
+                    isAllValid = false;
+                    $("#debut").siblings('span.erreur').html(`${monthStr}/${year} ne dispose pas de ${day} jours.`).css('display', 'block');
+                }
+            }
         }
     }
-    if (dateFin.trim() == '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFin)) {
         isAllValid = false;
-        $("#fin").siblings('span.erreur').html('Champ obligatoire').css('display', 'block');
+        $("#fin").siblings('span.erreur').html('Invalide').css('display', 'block');
+        //$("#fin").siblings('span.erreur').html('Format attendu : yyyy-MM-dd.').css('display', 'block');
     } else {
-        $("#fin").siblings('span.erreur').css('display', 'none');
+        const [yearStr, monthStr, dayStr] = dateFin.split("-");
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        const day = parseInt(dayStr, 10);
+
+        if (month < 1 || month > 12) {
+            isAllValid = false;
+            $("#fin").siblings('span.erreur').html('Mois invalide (valeur entre 1 et 12 attendue).').css('display', 'block');
+        } else if (day < 1 || day > 31) {
+            isAllValid = false;
+            $("#fin").siblings('span.erreur').html('Jour invalide (valeur entre 1 et 31 attendue).').css('display', 'block');
+        } else {
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+                if (month === 2 && day === 29) {
+                    isAllValid = false;
+                    $("#fin").siblings('span.erreur').html(`L'année ${year} n'est pas bissextile.`).css('display', 'block');
+                } else {
+                    isAllValid = false;
+                    $("#fin").siblings('span.erreur').html(`${monthStr}/${year} ne dispose pas de ${day} jours.`).css('display', 'block');
+                }
+            }
+        }
+    }
+
+    if ((/^\d{4}-\d{2}-\d{2}$/.test(dateDebut)) && (/^\d{4}-\d{2}-\d{2}$/.test(dateFin))) {
+
         const startDate = document.getElementById('debut').value;
         const endDate = document.getElementById('fin').value;
         const resultElement = document.getElementById('messageStruct');
@@ -447,32 +489,34 @@ var Valider = function () {
                 isAllValid = false;
                 resultElement.textContent = 'La date fin doit être supérieure ou égale à la date début.';
             }
-        } else {
+        }
+        if (document.getElementById('defaultCheck_Tous').checked == false && nbreCocher == 0) {
             isAllValid = false;
-            $("#fin").siblings('span.erreur').css('display', 'block').html('Revoir l\'année.');
+            document.getElementById('erreurCheck').textContent = "Veuillez cocher au moins";
         }
     }
-    if (document.getElementById('defaultCheck_Tous').checked == false && nbreCocher == 0) {
-        isAllValid = false;
-        document.getElementById('erreurCheck').textContent = "Veuillez cocher au moins";
-    }
     compteurCheckBox();
+
     if (isAllValid) {
-        
         var objData = {};
-        var listOfCaisseAffect = new Array();
+        var listOfCaisseAffect = [];
+
         switch (pageName) {
             case "TabBord":
-                loadData(pageName);
+                loadData(pageName); toggleForms("partieSecond");
+                $("#titleParam_").text("Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin));
                 break;
+
             case "EditOperation":
                 $("#tab_Caisse").find("tr:gt(0)").each(function () {
-                    var OrderDetailCaisseAffect = {};
-                    if ($(this).find('td:eq(1) input').is(':checked') == true) {
-                        OrderDetailCaisseAffect.code = $(this).find('td:eq(0) input').val();
-                        listOfCaisseAffect.push(OrderDetailCaisseAffect);
+                    var $row = $(this);
+                    if ($row.find('td:eq(1) input').is(':checked')) {
+                        listOfCaisseAffect.push({
+                            code: $row.find('td:eq(0) input').val()
+                        });
                     }
-                })
+                });
+
                 objData.listOfCaisseAffect = listOfCaisseAffect;
                 objData.dateDebut = dateDebut;
                 objData.dateFin = dateFin;
@@ -487,78 +531,98 @@ var Valider = function () {
                     data: JSON.stringify(objData),
                     url: '/CRUD/SendExploitation',
                     success: function (data) {
-                        switch (data.statut) {
-                            case true:
-                                toggleForms("partieSecond");
-                                document.getElementById('titleParam_').textContent = "Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin);
-                                $('#tab_' + pageName).DataTable().destroy();
-                                $("#tab_" + pageName + " tbody").empty();
+                        if (data.statut === true) {
+                            toggleForms("partieSecond");
+                            $("#titleParam_").text("Opération caisse du " + afficherDateddMMyyyy(dateDebut) + " au " + afficherDateddMMyyyy(dateFin));
 
-                                for (var i = 0; i < data.donnee.length; i++) {
-                                    var item = data.donnee[i];
-                                    var FLAG = item.FLAG;
-                                    var entree = item.entree;
-                                    var sortie = item.sortie;
-                                    var solde = item.solde;
-                                    if (entree == "0") {
-                                        entree = "";
-                                    } 
-                                    if (sortie == "0") {
-                                        sortie = "";
-                                    } 
-                                    if (solde == "0") {
-                                        solde = "";
-                                    } 
-                                    var couleur = '';
+                            var $table = $('#tab_' + pageName);
+                            $table.DataTable().destroy();
+                            $table.find("tbody").empty();
 
-                                    switch (FLAG) {
-                                        case "C":
-                                            couleur = "#00ffff"; // cyan
-                                            break;
-                                        case "D":
-                                            couleur = "#fefefe"; // presque blanc
-                                            break;
-                                        case "T":
-                                            couleur = "#ffdab9"; // pêche clair
-                                            break;
-                                        case "G":
-                                            couleur = "#808000"; // olive
-                                            break;
-                                        default:
-                                            couleur = "#ffffff"; // blanc par défaut
-                                            break;
-                                    }
+                            data.donnee.forEach(function (item) {
+                                var couleur = {
+                                    "C": "#00ffff", // cyan
+                                    "D": "#fefefe", // presque blanc
+                                    "T": "#ffdab9", // pêche clair
+                                    "G": "#808000"  // olive
+                                }[item.FLAG] || "#ffffff"; // par défaut blanc
 
-                                    var list = `
-                                                    <tr style="background-color: ${couleur}">
-                                                        <td>${item.caisse}</td>
-                                                        <td>${item.date1}</td>
-                                                        <td>${item.Designation}</td>
-                                                        <td style="text-align:right">${separateur_mil(entree)}</td>
-                                                        <td style="text-align:right">${separateur_mil(sortie)}</td>
-                                                        <td style="text-align:right">${separateur_mil(solde)}</td>
-                                                    </tr>                                                
-                                                `;
-                                    $("#tab_" + pageName + " tbody").append(list);
-                                }
+                                var entree = item.entree !== "0" ? separateur_mil(item.entree) : "";
+                                var sortie = item.sortie !== "0" ? separateur_mil(item.sortie) : "";
+                                var solde = item.solde !== "0" ? separateur_mil(item.solde) : "";
 
-                                break;
-                            default:
-                                document.getElementById('errorEditOper').textContent = data.message;
-                                setTimeout(function () {
-                                    document.getElementById('errorEditOper').textContent = "";
-                                },2500)
-                                break;
+                                var row = `
+                                    <tr style="background-color: ${couleur}">
+                                        <td>${item.caisse}</td>
+                                        <td>${item.date1}</td>
+                                        <td>${item.Designation}</td>
+                                        <td style="text-align:right">${entree}</td>
+                                        <td style="text-align:right">${sortie}</td>
+                                        <td style="text-align:right">${solde}</td>
+                                    </tr>
+                                `;
+                                $table.find("tbody").append(row);
+                            });
+
+                        } else {
+                            $("#errorEditOper").text(data.message);
+                            setTimeout(function () {
+                                $("#errorEditOper").text('');
+                            }, 2500);
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.log('La réponse a échoué : ' + error);
+                        console.error('Erreur AJAX : ' + error);
+                        alert('Erreur lors de l\'envoi des données. Veuillez réessayer.');
                     }
-                })
+                });
                 break;
         }
     }
+};
+
+function isValidDate(selector, dateString) {
+    let isValid = true;
+    let errorMessage = "";
+
+    // Vérifie le format avec une regex stricte yyyy-MM-dd
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        isValid = false;
+        errorMessage = "Format de date invalide (attendu : yyyy-MM-dd).";
+    } else {
+        const [yearStr, monthStr, dayStr] = dateString.split("-");
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        const day = parseInt(dayStr, 10);
+
+        if (month < 1 || month > 12) {
+            isValid = false;
+            errorMessage = "Mois invalide (valeur entre 1 et 12 attendue).";
+        } else if (day < 1 || day > 31) {
+            isValid = false;
+            errorMessage = "Jour invalide (valeur entre 1 et 31 attendue).";
+        } else {
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+                if (month === 2 && day === 29) {
+                    isValid = false;
+                    errorMessage = `L'année ${year} n'est pas bissextile.`;
+                } else {
+                    isValid = false;
+                    errorMessage = `${monthStr}/${year} ne dispose pas de ${day} jours.`;
+                }
+            }
+        }
+    }
+
+    // Appelle la fonction pour afficher ou masquer l'erreur
+    setErrorMessage(selector, errorMessage, isValid);
+
+    return isValid;
 }
+
+
+
 var Supprimer = function () {
     toggleForms("partieDelete");
     var nomTitre = "Suppression ";
@@ -810,12 +874,14 @@ function formTableau(pageName) {
                                             </div>
                                             <div class="col-md-3">
                                                 <input type="date" name="debut" value="" id="debut" class="input_focus" />
+                                                <span class="erreur"></span>
                                             </div>
                                             <div class="col-md-2">
                                                 <label for="fin">Au </label>
                                             </div>
                                             <div class="col-md-3">
                                                 <input type="date" name="fin" value="" id="fin" class="input_focus" />
+                                                <span class="erreur"></span>
                                             </div>
                                         </div>
                                         <div class="row mb-2 justify-content-center" style="text-align:center">
@@ -907,12 +973,14 @@ function formTableau(pageName) {
                                             </div>
                                             <div class="col-md-3">
                                                 <input type="date" name="debut" value="" id="debut" class="input_focus" />
+                                                <span class="erreur"></span>
                                             </div>
                                             <div class="col-md-2">
                                                 <label for="fin">Au </label>
                                             </div>
                                             <div class="col-md-3">
                                                 <input type="date" name="fin" value="" id="fin" class="input_focus" />
+                                                <span class="erreur"></span>
                                             </div>
                                         </div>
                                         <div class="row mb-2 justify-content-center" style="text-align:center">
